@@ -28,12 +28,6 @@ export default function AdvocateDashboard() {
   const [overdueCount, setOverdueCount] = useState(0);
   const [autoCount, setAutoCount] = useState(0);
 
-  const stats = [
-    { label: "Active clients", value: clients.length, icon: Users, tint: "bg-primary/10 text-primary" },
-    { label: "Open tasks", value: 0, icon: ClipboardList, tint: "bg-accent/15 text-accent" },
-    { label: "Auto-generated", value: autoCount, icon: Wand2, tint: "bg-secondary text-secondary-foreground" },
-    { label: "Overdue tasks", value: overdueCount, icon: AlertTriangle, tint: "bg-status-overdue/15 text-status-overdue", href: "/advocate/todo#overdue-section" },
-  ];
 
   const [flagged, setFlagged] = useState<FlaggedClient[]>([]);
   const [unreadSignals, setUnreadSignals] = useState<UnreadSignal[]>([]);
