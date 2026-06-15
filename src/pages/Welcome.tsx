@@ -18,6 +18,7 @@ export default function Welcome() {
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [waitedForSession, setWaitedForSession] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
 
   // Detect an invite-link error in the URL hash (expired / already used).
   const hashError = useMemo(() => {
