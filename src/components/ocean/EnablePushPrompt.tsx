@@ -84,9 +84,15 @@ export function EnablePushPrompt() {
       setVisible(false);
       return;
     }
+    const reasonText: Record<string, string> = {
+      unsupported: "This browser doesn't support push notifications.",
+      "no-sw": "Service worker unavailable. Try reloading the page.",
+      "no-vapid": "Push isn't configured on the server yet.",
+      error: res.detail || "Something went wrong. Try again from Settings.",
+    };
     toast({
       title: "Couldn't enable notifications",
-      description: "You can try again later from Settings.",
+      description: reasonText[res.reason ?? "error"] ?? "You can try again later from Settings.",
       variant: "destructive",
     });
     setVisible(false);
