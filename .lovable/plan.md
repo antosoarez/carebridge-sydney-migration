@@ -1,31 +1,32 @@
-# Fix v2 → v3: dollar-tags únicos + dedup de DROP POLICY
+# Fix v3 → v4: hacer idempotente `ALTER PUBLICATION ... ADD TABLE`
 
 ## Qué pasó
 
-En la migración `20260516163230_*` la sentencia `CREATE TYPE` ya venía envuelta por el autor original en:
+Postgres falla con `42710: relation "documents" is already member of publication "supabase_realtime"` cuando una migración hace:
+
 ```sql
-DO $$ BEGIN
-  CREATE TYPE public.document_visibility AS ENUM ('shared','advocate_private');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.documents;
 ```
 
-Mi script v2 detectó el `CREATE TYPE` adentro y le metió OTRO `DO $$ ... END $$` encima. Resultado: dos `$$` anidados con el mismo tag, que Postgres lee como cierre prematuro → `syntax error at or near "BEGIN"`.
-
-Además v2 generó líneas duplicadas de `DROP POLICY IF EXISTS` cuando la migración original ya traía una.
+y la tabla ya está suscripta a realtime (lo agregaste en una corrida anterior, o Supabase la suscribió sola). No existe la variante `ADD TABLE IF NOT EXISTS` para publicaciones.
 
 ## Solución
 
-Regenero `sydney-bundle-v3.sql` con dos ajustes al script:
+Agrego una transformación más al script: envolver cada `ALTER PUBLICATION ... ADD TABLE ...;` en un `DO` block que ignora el error de duplicado:
 
-1. **Dollar-quote único para el wrapper**: uso `DO $mig$ BEGIN ... END $mig$;` en lugar de `$$`. Así, si el `CREATE TYPE` ya estaba dentro de un `DO $$`, los tags no chocan y queda anidado válidamente.
-2. **Dedup de DROP POLICY consecutivos**: tras aplicar las transformaciones, colapso pares idénticos de `DROP POLICY IF EXISTS ... ON ...;` consecutivos.
-3. **Bonus**: lo mismo para `DROP TRIGGER IF EXISTS` consecutivos (por las dudas).
+```sql
+DO $pub$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.documents;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $pub$;
+```
 
-El resto del bundle se mantiene igual (CREATE TABLE IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, ON CONFLICT en buckets, etc.).
+Esto cubre todas las tablas que las migraciones suscribieron a realtime sin tener que listarlas a mano.
+
+Regenero el archivo como `sydney-bundle-v4.sql`.
 
 ## Pasos para vos
 
-1. Te entrego `sydney-bundle-v3.sql`.
-2. Pegalo en el SQL Editor de Sydney → **Run**.
-3. Avisame si termina ✅ o si aparece otro error (con número de línea si podés).
+1. Te paso `sydney-bundle-v4.sql`.
+2. Pegalo en SQL Editor de Sydney → **Run**.
+3. Decime si termina ✅ o si aparece otro error.
