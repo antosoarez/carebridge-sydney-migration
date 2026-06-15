@@ -29,11 +29,14 @@ export default function ClientDashboard() {
     let cancelled = false;
     (async () => {
       const { data } = await (supabase.from("profiles") as any)
-        .select("onboarding_completed_at")
+        .select("onboarding_completed_at, navigation_intake_seen_at")
         .eq("id", user.id)
         .maybeSingle();
-      if (!cancelled && data && !data.onboarding_completed_at) {
+      if (cancelled || !data) return;
+      if (!data.onboarding_completed_at) {
         navigate("/client/onboarding", { replace: true });
+      } else if (!data.navigation_intake_seen_at) {
+        navigate("/client/navigation-intake", { replace: true });
       }
     })();
     return () => { cancelled = true; };

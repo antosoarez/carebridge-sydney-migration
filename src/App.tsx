@@ -34,6 +34,7 @@ import ClientAvailabilityList from "./pages/ClientAvailabilityList";
 import ClientAvailabilityRespond from "./pages/ClientAvailabilityRespond";
 import CodeOfConduct from "./pages/CodeOfConduct";
 import ClientOnboarding from "./pages/ClientOnboarding";
+import ClientNavigationIntake from "./pages/ClientNavigationIntake";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/client/settings" element={<C><Settings /></C>} />
             <Route path="/client/code-of-conduct" element={<C><CodeOfConduct /></C>} />
             <Route path="/client/onboarding" element={<C><ClientOnboarding /></C>} />
+            <Route path="/client/navigation-intake" element={<C><ClientNavigationIntake /></C>} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/reset-password" element={<ResetPassword />} />
