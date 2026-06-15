@@ -36,6 +36,7 @@ export function EnablePushPrompt() {
   useEffect(() => {
     if (!user) return;
     if (!isPushSupported()) return;
+    if (isPreviewContext()) return;
     if (snoozed()) return;
     let cancelled = false;
     (async () => {
