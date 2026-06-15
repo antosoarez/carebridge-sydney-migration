@@ -21,7 +21,7 @@ export function getPermission(): NotificationPermission {
   return Notification.permission;
 }
 
-function isPreviewContext(): boolean {
+export function isPreviewContext(): boolean {
   if (typeof window === "undefined") return true;
   let inIframe = false;
   try { inIframe = window.self !== window.top; } catch { inIframe = true; }
