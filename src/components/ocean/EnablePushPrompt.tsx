@@ -4,6 +4,7 @@ import { Bell, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   isPushSupported,
+  isPreviewContext,
   getPermission,
   currentEndpoint,
   subscribeAndStore,
