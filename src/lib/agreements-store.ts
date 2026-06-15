@@ -1,6 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+// NOTE: these tables are new in this migration; the generated types.ts
+// has not been regenerated yet, so we cast `from()` calls to untyped.
+const sb = supabase as unknown as {
+  from: (table: string) => any;
+  auth: typeof supabase.auth;
+};
+
 export type AgreementDocument = {
   id: string;
   slug: string;
@@ -28,17 +35,21 @@ export function useAgreements(clientId: string | undefined) {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const docsQ = supabase
+    const { data: d } = await sb
       .from("agreement_documents")
       .select("*")
       .eq("active", true)
       .order("sort_order", { ascending: true });
-    const accQ = clientId
-      ? supabase.from("client_agreement_acceptances").select("*").eq("client_id", clientId)
-      : null;
-    const [{ data: d }, accRes] = await Promise.all([docsQ, accQ ?? Promise.resolve({ data: [] as AgreementAcceptance[] })]);
+    let acc: AgreementAcceptance[] = [];
+    if (clientId) {
+      const { data: a } = await sb
+        .from("client_agreement_acceptances")
+        .select("*")
+        .eq("client_id", clientId);
+      acc = (a as AgreementAcceptance[]) ?? [];
+    }
     setDocs((d as AgreementDocument[]) ?? []);
-    setAcceptances(((accRes as { data: AgreementAcceptance[] | null }).data) ?? []);
+    setAcceptances(acc);
     setLoading(false);
   }, [clientId]);
 
@@ -46,16 +57,18 @@ export function useAgreements(clientId: string | undefined) {
 
   const acceptedDocIds = new Set(acceptances.map((a) => a.document_id));
   const requiredDocs = docs.filter((d) => d.required);
-  const allRequiredAccepted = requiredDocs.every((d) => acceptedDocIds.has(d.id));
+  const allRequiredAccepted =
+    requiredDocs.length > 0 && requiredDocs.every((d) => acceptedDocIds.has(d.id));
 
   const accept = useCallback(async (doc: AgreementDocument, opts?: { notes?: string }) => {
     if (!clientId) return { error: "No client" };
-    const { error } = await supabase.from("client_agreement_acceptances").insert({
+    const userRes = await sb.auth.getUser();
+    const { error } = await sb.from("client_agreement_acceptances").insert({
       client_id: clientId,
       document_id: doc.id,
       document_slug: doc.slug,
       document_version: doc.version,
-      accepted_by_user_id: (await supabase.auth.getUser()).data.user?.id ?? null,
+      accepted_by_user_id: userRes.data.user?.id ?? null,
       notes: opts?.notes ?? null,
       user_agent: navigator.userAgent.slice(0, 255),
     });
