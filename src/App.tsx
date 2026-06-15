@@ -35,6 +35,7 @@ import ClientAvailabilityList from "./pages/ClientAvailabilityList";
 import ClientAvailabilityRespond from "./pages/ClientAvailabilityRespond";
 import CodeOfConduct from "./pages/CodeOfConduct";
 import ClientOnboarding from "./pages/ClientOnboarding";
+import ClientAgreements from "./pages/ClientAgreements";
 import ClientNavigationIntake from "./pages/ClientNavigationIntake";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
