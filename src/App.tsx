@@ -77,6 +77,7 @@ const App = () => (
             <Route path="/advocate/brain-dump" element={<A><BrainDump role="advocate" /></A>} />
             <Route path="/advocate/todo" element={<A><TodoList role="advocate" /></A>} />
             <Route path="/advocate/templates" element={<A><Templates /></A>} />
+            <Route path="/advocate/settings/automations" element={<A><SettingsAutomations /></A>} />
             <Route path="/advocate/availability" element={<A><AvailabilityRequestsList /></A>} />
             <Route path="/advocate/availability/new" element={<A><AvailabilityRequestForm /></A>} />
             <Route path="/advocate/availability/:id/edit" element={<A><AvailabilityRequestForm /></A>} />
