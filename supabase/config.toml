@@ -1,0 +1,37 @@
+project_id = "umuvklhpppuchijbvsae"
+
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.handle-email-suppression]
+    verify_jwt = false
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.queue-appointment-reminders]
+    verify_jwt = true
+  [functions.notify-appointment-confirmed]
+    verify_jwt = true
+  [functions.queue-task-reminders]
+    verify_jwt = true
+  [functions.queue-payment-reminders]
+    verify_jwt = true
+  [functions.send-transactional-email]
+    verify_jwt = true
+  [functions.resend-client-invite]
+    verify_jwt = false
+  [functions.generate-invite-link]
+    verify_jwt = false
+  [functions.invite-client]
+    verify_jwt = false
+  [functions.mark-activated]
+    verify_jwt = false
+  [functions.send-password-reset]
+    verify_jwt = false
+  [functions.verify-email-change]
+    verify_jwt = false
+  [functions.submit-enquiry]
+    verify_jwt = false
