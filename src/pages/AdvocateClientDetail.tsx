@@ -18,6 +18,9 @@ import { MiniUpcomingAppointments } from "@/components/ocean/MiniUpcomingAppoint
 import { ClientEngagementBar } from "@/components/ocean/ClientEngagementBar";
 import { useOwnClientProgress } from "@/lib/client-progress";
 import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
+import { ClientAgreementsPanel } from "@/components/ocean/ClientAgreementsPanel";
+import { PaymentLinkField } from "@/components/ocean/PaymentLinkField";
+import { useAgreements } from "@/lib/agreements-store";
 import { CopyInviteLinkButton } from "@/components/ocean/CopyInviteLinkButton";
 import { EmailChangeSection, EmailChangeAuditLog } from "@/components/ocean/EmailChangeSection";
 import { supabase } from "@/integrations/supabase/client";
@@ -220,6 +223,16 @@ function ReportProgressCard({ clientId, initialProgress, initialFrom, initialTo,
   );
 }
 
+function PaymentLinkSection({ clientId }: { clientId: string }) {
+  const { allRequiredAccepted } = useAgreements(clientId);
+  return (
+    <section className="glass-card p-6 space-y-3">
+      <h2 className="font-display text-xl text-primary-deep">Payment link</h2>
+      <PaymentLinkField clientId={clientId} unlocked={allRequiredAccepted} />
+    </section>
+  );
+}
+
 function InternalNotesCard({ clientId }: { clientId: string }) {
   const [body, setBody] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -407,7 +420,11 @@ export default function AdvocateClientDetail() {
 
           <ClientReportsSection clientId={client.id} viewerRole="advocate" />
 
+          <ClientAgreementsPanel clientId={client.id} asAdvocate />
+
           <ClientPaymentTracker clientId={client.id} clientName={client.name.split(" ")[0]} />
+
+          <PaymentLinkSection clientId={client.id} />
 
           <InternalNotesCard clientId={client.id} />
 

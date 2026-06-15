@@ -147,6 +147,24 @@ export default function Settings() {
           </section>
         )}
 
+        {role === "advocate" && (
+          <section className="glass-card p-6 lg:col-span-2 space-y-3">
+            <h2 className="font-display text-xl text-primary-deep">Automations</h2>
+            <Link
+              to="/advocate/settings/automations"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/40 hover:bg-secondary transition-calm group"
+            >
+              <ScrollText className="h-5 w-5 text-accent shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-primary-deep">Workflow rules</div>
+                <div className="text-xs text-muted-foreground">View and toggle the rules that move clients through the lifecycle.</div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary-deep" />
+            </Link>
+          </section>
+        )}
+
+
         <section className="glass-card p-6 lg:col-span-2 space-y-3">
           <h2 className="font-display text-xl text-primary-deep">Account</h2>
           <p className="text-xs text-muted-foreground">Sign out of CareBridge Perth on this device.</p>

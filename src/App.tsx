@@ -14,6 +14,7 @@ import CalendarPage from "./pages/Calendar";
 import DocumentsPage from "./pages/Documents";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
+import SettingsAutomations from "./pages/SettingsAutomations";
 import Messages from "./pages/Messages";
 import BrainDump from "./pages/BrainDump";
 import TodoList from "./pages/TodoList";
@@ -34,6 +35,7 @@ import ClientAvailabilityList from "./pages/ClientAvailabilityList";
 import ClientAvailabilityRespond from "./pages/ClientAvailabilityRespond";
 import CodeOfConduct from "./pages/CodeOfConduct";
 import ClientOnboarding from "./pages/ClientOnboarding";
+import ClientAgreements from "./pages/ClientAgreements";
 import ClientNavigationIntake from "./pages/ClientNavigationIntake";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -76,6 +78,7 @@ const App = () => (
             <Route path="/advocate/brain-dump" element={<A><BrainDump role="advocate" /></A>} />
             <Route path="/advocate/todo" element={<A><TodoList role="advocate" /></A>} />
             <Route path="/advocate/templates" element={<A><Templates /></A>} />
+            <Route path="/advocate/settings/automations" element={<A><SettingsAutomations /></A>} />
             <Route path="/advocate/availability" element={<A><AvailabilityRequestsList /></A>} />
             <Route path="/advocate/availability/new" element={<A><AvailabilityRequestForm /></A>} />
             <Route path="/advocate/availability/:id/edit" element={<A><AvailabilityRequestForm /></A>} />
@@ -96,6 +99,7 @@ const App = () => (
             <Route path="/client/settings" element={<C><Settings /></C>} />
             <Route path="/client/code-of-conduct" element={<C><CodeOfConduct /></C>} />
             <Route path="/client/onboarding" element={<C><ClientOnboarding /></C>} />
+            <Route path="/client/agreements" element={<C><ClientAgreements /></C>} />
             <Route path="/client/navigation-intake" element={<C><ClientNavigationIntake /></C>} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />

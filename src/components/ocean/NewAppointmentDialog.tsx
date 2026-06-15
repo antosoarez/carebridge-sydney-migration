@@ -59,6 +59,7 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
   const doInsert = async (startsIso: string) => {
     if (!user) return;
     setSaving(true);
+    const isDiscovery = title.trim().toLowerCase() === "free discovery call";
     const { error } = await supabase.from("appointments").insert({
       client_id: clientId,
       title: title.trim(),
@@ -66,6 +67,7 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
       notes: notes.trim() || null,
       starts_at: startsIso,
       created_by: user.id,
+      category: isDiscovery ? "free_discovery_call" : null,
     });
     setSaving(false);
     if (error) { toast.error("Couldn't create — try again"); return; }
@@ -129,6 +131,13 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
             <div className="space-y-2">
               <Label>Title</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Oncology follow-up" />
+              <button
+                type="button"
+                onClick={() => setTitle("Free discovery call")}
+                className="text-xs text-primary underline self-start"
+              >
+                Use “Free discovery call” preset
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

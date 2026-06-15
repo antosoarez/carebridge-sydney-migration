@@ -35,3 +35,5 @@ project_id = "umuvklhpppuchijbvsae"
     verify_jwt = false
   [functions.submit-enquiry]
     verify_jwt = false
+  [functions.enquiry-webhook]
+    verify_jwt = false
