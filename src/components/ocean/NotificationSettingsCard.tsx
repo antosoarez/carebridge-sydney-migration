@@ -122,9 +122,17 @@ export function NotificationSettingsCard() {
         variant: "destructive",
       });
     } else {
+      const reasonText: Record<string, string> = {
+        unsupported: isPreviewContext()
+          ? "Push notifications don't work inside the Lovable preview. Open the published app in a new tab to enable them."
+          : "This browser doesn't support push notifications.",
+        "no-sw": "Service worker unavailable. Try reloading the page.",
+        "no-vapid": "Push isn't configured on the server yet. Add VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY in Supabase Edge Function secrets.",
+        error: res.detail || "Something went wrong. Please try again.",
+      };
       toast({
         title: "Couldn't enable notifications",
-        description: "Please try again in a moment.",
+        description: reasonText[res.reason ?? "error"] ?? "Please try again in a moment.",
         variant: "destructive",
       });
     }
