@@ -6,7 +6,7 @@ import { useClients } from "@/lib/clients-store";
 import { useAppointments } from "@/lib/appointments-store";
 import { countdownLabel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, ClipboardList, Heart, MessageCircle, Plus, Sparkles, Users, Wand2 } from "lucide-react";
+import { ArrowRight, CalendarRange, Heart, MessageCircle, Plus, Sparkles, Wand2 } from "lucide-react";
 import { PendingDocumentsBanner } from "@/components/ocean/PendingDocumentsBanner";
 import { InviteClientDialog } from "@/components/ocean/InviteClientDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,12 +28,6 @@ export default function AdvocateDashboard() {
   const [overdueCount, setOverdueCount] = useState(0);
   const [autoCount, setAutoCount] = useState(0);
 
-  const stats = [
-    { label: "Active clients", value: clients.length, icon: Users, tint: "bg-primary/10 text-primary" },
-    { label: "Open tasks", value: 0, icon: ClipboardList, tint: "bg-accent/15 text-accent" },
-    { label: "Auto-generated", value: autoCount, icon: Wand2, tint: "bg-secondary text-secondary-foreground" },
-    { label: "Overdue tasks", value: overdueCount, icon: AlertTriangle, tint: "bg-status-overdue/15 text-status-overdue", href: "/advocate/todo#overdue-section" },
-  ];
 
   const [flagged, setFlagged] = useState<FlaggedClient[]>([]);
   const [unreadSignals, setUnreadSignals] = useState<UnreadSignal[]>([]);
@@ -199,26 +193,12 @@ export default function AdvocateDashboard() {
         <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-calm" />
       </Link>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {stats.map((s) => {
-          const inner = (
-            <>
-              <div className={`inline-flex h-10 w-10 rounded-2xl items-center justify-center ${s.tint}`}>
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div className="mt-4 font-display text-3xl text-primary-deep">{s.value}</div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
-            </>
-          );
-          return s.href ? (
-            <Link key={s.label} to={s.href} className="glass-card p-5 hover:shadow-float hover:-translate-y-0.5 transition-calm block">
-              {inner}
-            </Link>
-          ) : (
-            <div key={s.label} className="glass-card p-5">{inner}</div>
-          );
-        })}
-      </div>
+      {autoCount > 0 && (
+        <p className="text-xs text-muted-foreground mb-10 flex items-center gap-1.5">
+          <Wand2 className="h-3.5 w-3.5 text-accent" />
+          {autoCount} auto-generated {autoCount === 1 ? "task is" : "tasks are"} open in the background.
+        </p>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="lg:col-span-2 space-y-4">
