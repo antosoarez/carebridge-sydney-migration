@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Mail } from "lucide-react";
+import { Mail, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { MfaSection } from "@/components/ocean/MfaSection";
 import { EmailChangeSection } from "@/components/ocean/EmailChangeSection";
 import { NotificationSettingsCard } from "@/components/ocean/NotificationSettingsCard";
