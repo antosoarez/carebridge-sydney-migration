@@ -59,6 +59,7 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
   const doInsert = async (startsIso: string) => {
     if (!user) return;
     setSaving(true);
+    const isDiscovery = title.trim().toLowerCase() === "free discovery call";
     const { error } = await supabase.from("appointments").insert({
       client_id: clientId,
       title: title.trim(),
@@ -66,6 +67,7 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
       notes: notes.trim() || null,
       starts_at: startsIso,
       created_by: user.id,
+      category: isDiscovery ? "free_discovery_call" : null,
     });
     setSaving(false);
     if (error) { toast.error("Couldn't create — try again"); return; }
