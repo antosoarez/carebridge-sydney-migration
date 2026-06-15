@@ -1,86 +1,51 @@
+# Plan: Aplicar el schema en Supabase Sydney sin terminal
+
 ## Objetivo
+Generar **un único archivo SQL** (`/mnt/documents/sydney-bundle.sql`) que vos puedas:
+1. Abrir / descargar desde el panel de artefactos.
+2. Copiar todo el contenido.
+3. Pegarlo en **Supabase Sydney → SQL Editor → New query**.
+4. Apretar **Run** una sola vez.
 
-Migrar el código de Carebridgeperth (Lovable Cloud, Seoul) a este proyecto Lovable apuntándolo a **tu Supabase propio en Sydney (ap-southeast-2)** para cumplir residencia de datos del Privacy Act AU. **Sin activar Lovable Cloud.**
+No necesitás terminal, Node, ni Supabase CLI.
 
-## Credenciales Sydney (provistas)
+## Qué hace el script de generación
+- Lista las 76 migraciones en `supabase/migrations/` en orden alfabético (que es también orden cronológico por el timestamp del nombre).
+- Las concatena en un único `bundle.sql` separadas por una línea en blanco.
+- Los `INSERT INTO storage.buckets` ya están incluidos dentro de dos migraciones existentes (`client-documents` y el segundo bucket), así que **no hay que agregar buckets aparte**: ya viajan en el bundle.
+- Envuelve cada migración con un comentario `-- ===== file: <nombre> =====` por si algo falla y necesitamos identificar el punto (sin romper el formato "un solo archivo" que pediste — es solo un comentario SQL).
 
-- `VITE_SUPABASE_URL` = `https://dkfjmtysfuqtdpaqpxsd.supabase.co`
-- `VITE_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable__1FuQ_cTlSa712zYh6QynA_R7WDRSSd`
-- `VITE_SUPABASE_PROJECT_ID` = `dkfjmtysfuqtdpaqpxsd`
+## Qué tenés que hacer vos (paso a paso, sin terminal)
 
-Estas tres son **publishable / públicas** (la URL y la publishable key se exponen al browser por diseño). Las pongo en `.env` del repo. El **service_role** queda fuera del repo y solo se usa en tu máquina para desplegar functions y migraciones.
+1. Yo te genero el archivo y aparece como **artefacto descargable** en el chat.
+2. Lo abrís / lo copiás (Ctrl/Cmd+A → Ctrl/Cmd+C).
+3. Vas a https://supabase.com/dashboard/project/dkfjmtysfuqtdpaqpxsd/sql/new
+4. Pegás todo, **Run**.
+5. Esperás. Va a tardar 30-90 segundos.
+6. Me pegás el resultado (éxito o el primer error que veas).
 
----
+## Qué hacemos si falla
+- Si un statement falla porque el objeto **ya existe** (ej. extensión `pgcrypto`): seguramente no es bloqueante, lo marcamos y seguimos.
+- Si falla por **dependencia faltante** (ej. una función que referencia otra que aún no se creó): muy improbable porque las migraciones ya estaban en orden y se aplicaron así en Seoul, pero si pasa, identifico el archivo por el comentario `-- ===== file: ... =====` y armamos un fix puntual.
+- Si falla a mitad: Supabase corre el bloque en una transacción implícita por statement, no por archivo, así que **lo que ya se creó queda**. Reintentar el bundle entero suele ser seguro porque la mayoría de los `CREATE` son idempotentes en este proyecto; si no, te paso un bundle "desde el punto X".
 
-## Paso 1 — Reemplazar el shell TanStack Start por el código original
+## Qué NO hace este plan
+- No despliega las 25 Edge Functions (ese es el **paso 4**, separado — esas sí o sí necesitan CLI o que las pegues una por una en el Dashboard → Edge Functions; lo vemos después).
+- No setea los secrets de las functions (RESEND_API_KEY, VAPID keys, etc.) — paso aparte cuando lleguemos a functions.
+- No reconfigura los redirect URLs de Auth ni los email templates en Auth → eso es UI de Supabase, lo hacemos al final.
 
-Borrar del shell actual:
-- `src/routes/`, `src/router.tsx`, `src/routeTree.gen.ts`, `src/server.ts`, `src/start.ts`
-- `src/lib/error-capture.ts`, `src/lib/error-page.ts`, `src/lib/lovable-error-reporting.ts`, `src/lib/api/`, `src/lib/config.server.ts`
-- `vite.config.ts`, `bunfig.toml`, `tsconfig.json`, `eslint.config.js`, `package.json`, `components.json`, `src/styles.css`, `.prettierrc`, `.prettierignore`
+## Detalle técnico (para referencia)
+- Input: `supabase/migrations/*.sql` (76 archivos).
+- Output: `/mnt/documents/sydney-bundle.sql`.
+- Comando aproximado:
+  ```
+  for f in supabase/migrations/*.sql (orden alfabético); do
+    echo "-- ===== file: $f =====" >> bundle.sql
+    cat $f >> bundle.sql
+    echo "" >> bundle.sql
+  done
+  ```
+- Tamaño esperado: ~300-800 KB de SQL (manejable para pegar en el editor).
 
-Copiar desde `/tmp/cb/` (excluyendo `.git` y `.workspace/.git`):
-- `src/` completo (App.tsx, main.tsx, pages/, components/, hooks/, integrations/, lib/, assets/, test/, App.css, index.css, vite-env.d.ts)
-- `public/` (logo, manifest, sw.js, sitemap, brand assets)
-- `supabase/` (config.toml, migrations/, functions/) — viaja en el repo pero se despliega desde tu máquina con Supabase CLI, no desde Lovable
-- `index.html`, `package.json`, `package-lock.json`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `eslint.config.js`, `components.json`, `vitest.config.ts`
-
-`bun install` para resolver deps (react-router-dom 6, @supabase/supabase-js, etc.).
-
-## Paso 2 — Apuntar a Supabase Sydney
-
-1. Crear `.env` en la raíz con los 3 valores de arriba.
-2. Leer `src/integrations/supabase/client.ts` del ZIP y, si tiene URL/publishable-key hardcodeadas de Lovable Cloud Seoul, reemplazar por lectura de `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`.
-3. Auditar `src/integrations/supabase/types.ts` — se queda como está si el schema Seoul = Sydney (después de aplicar migraciones).
-4. **No** activar Connectors → Supabase (riesgo de auto-provision de Lovable Cloud).
-
-## Paso 3 — Migraciones SQL a Sydney (lo corrés vos)
-
-Las 30+ migraciones en `supabase/migrations/` se aplican desde tu máquina:
-
-```
-supabase link --project-ref dkfjmtysfuqtdpaqpxsd
-supabase db push
-```
-
-No lo corro yo desde el sandbox de Lovable porque eso requiere tu access token de Supabase y no debe vivir acá.
-
-## Paso 4 — Edge Functions a Sydney (lo corrés vos)
-
-Las 25 functions en `supabase/functions/` se despliegan desde tu máquina:
-
-```
-supabase functions deploy --project-ref dkfjmtysfuqtdpaqpxsd
-```
-
-Después configurás los secrets requeridos por cada function (`SUPABASE_SERVICE_ROLE_KEY`, SMTP, VAPID, etc.) con `supabase secrets set`. Te paso la lista completa cuando termine el Paso 1 y pueda leer cada `index.ts`.
-
-## Paso 5 — Verificación
-
-1. `bun run build` limpio.
-2. Preview carga; Network tab muestra requests a `dkfjmtysfuqtdpaqpxsd.supabase.co` (Sydney), no Seoul.
-3. Configurar en dashboard de Supabase Sydney: Site URL + Additional Redirect URLs apuntando al preview/publish de este proyecto.
-4. Smoke tests manuales:
-   - Signup + email verify
-   - Login + MFA
-   - **Crisis resources visibles sin auth / sin emotion state / sin flags** (no quedan gates del proyecto viejo)
-   - Check-in 3 días sad/overwhelmed/anxious → low-mood flag privado en advocate dashboard, no expuesto al cliente
-   - Paleta /check-in: navy `#1C2B3A` texto, sage `#8BA888` acentos, sin rojo
-
----
-
-## Notas técnicas
-
-**NO se hace:**
-- Activar Lovable Cloud (irreversible, rompe residencia AU)
-- Usar Connectors → Supabase de Lovable
-- Crear Edge Functions en Lovable side
-- Copiar `.git` del ZIP
-
-**Riesgos:**
-- Cliente Supabase del proyecto viejo puede tener URL Seoul hardcodeada → audito y forzo lectura de `import.meta.env`.
-- Auth redirect URLs hay que reconfigurarlas en Supabase Sydney dashboard.
-- Email templates de `auth-email-hook` hay que recrearlas en Supabase Sydney Auth → Email Templates.
-- Si quisieras migrar data existente de Cloud Seoul, es un `pg_dump --data-only` aparte (paso opcional, lo discutimos después si hace falta).
-
-**Stack final:** Vite 5 + React 18 + react-router-dom 6 + Supabase JS + shadcn/ui (idéntico al repo viejo).
+## Siguiente paso después de aprobar
+Paso a build mode, genero el archivo, te lo dejo como `<presentation-artifact>` descargable, y te confirmo el link.
