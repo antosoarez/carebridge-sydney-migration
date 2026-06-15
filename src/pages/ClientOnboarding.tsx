@@ -98,7 +98,7 @@ export default function ClientOnboarding() {
         .eq("id", user.id);
       if (profileErr) throw profileErr;
 
-      navigate("/client", { replace: true });
+      navigate("/client/navigation-intake", { replace: true });
     } catch (err: any) {
       toast({
         title: "Something didn't save",
