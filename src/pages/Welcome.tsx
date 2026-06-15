@@ -41,6 +41,10 @@ export default function Welcome() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acknowledged) {
+      toast({ title: "Please acknowledge to continue", variant: "destructive" });
+      return;
+    }
     if (password.length < 8) {
       toast({ title: "Please use at least 8 characters", variant: "destructive" });
       return;
