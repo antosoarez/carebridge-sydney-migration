@@ -223,6 +223,16 @@ function ReportProgressCard({ clientId, initialProgress, initialFrom, initialTo,
   );
 }
 
+function PaymentLinkSection({ clientId }: { clientId: string }) {
+  const { allRequiredAccepted } = useAgreements(clientId);
+  return (
+    <section className="glass-card p-6 space-y-3">
+      <h2 className="font-display text-xl text-primary-deep">Payment link</h2>
+      <PaymentLinkField clientId={clientId} unlocked={allRequiredAccepted} />
+    </section>
+  );
+}
+
 function InternalNotesCard({ clientId }: { clientId: string }) {
   const [body, setBody] = useState("");
   const [loaded, setLoaded] = useState(false);
