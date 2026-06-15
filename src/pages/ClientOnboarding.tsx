@@ -72,7 +72,7 @@ export default function ClientOnboarding() {
     setSubmitting(true);
     try {
       // Record both consents (audit trail)
-      const { error: consentErr } = await (supabase.from("client_consents") as any).insert([
+      const { error: consentErr } = await ((supabase as any).from("client_consents")).insert([
         {
           user_id: user.id,
           kind: "scope_acknowledgment",
