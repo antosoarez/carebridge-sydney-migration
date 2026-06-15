@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/ocean/AppShell";
 import { useAppointments } from "@/lib/appointments-store";
 import { countdownLabel } from "@/lib/types";
@@ -18,8 +19,25 @@ import { CalendarHeart, MessageCircle, Sparkles, Waves, ArrowRight, Heart, Calen
 
 export default function ClientDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const firstName = ((user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "").split(/[ @]/)[0];
   const greeting = firstName ? `Hi ${firstName} 🌊` : "Hi there 🌊";
+
+  // First-time clients get the calm onboarding flow.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase.from("profiles") as any)
+        .select("onboarding_completed_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled && data && !data.onboarding_completed_at) {
+        navigate("/client/onboarding", { replace: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, navigate]);
 
   const { appointments } = useAppointments(user?.id);
   const { thoughts } = useThoughts("client");
