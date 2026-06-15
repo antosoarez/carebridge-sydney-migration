@@ -1,32 +1,43 @@
-# Fix v3 → v4: hacer idempotente `ALTER PUBLICATION ... ADD TABLE`
+## Plan
 
-## Qué pasó
+I’ll create a new `sydney-bundle-v5.sql` that fixes the recurring `app_role already exists` error and keeps the previous realtime-publication fix.
 
-Postgres falla con `42710: relation "documents" is already member of publication "supabase_realtime"` cuando una migración hace:
+## What will change
+
+1. Replace enum creation wrappers like:
 
 ```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.documents;
+DO $mig$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+    CREATE TYPE public.app_role AS ENUM (...);
+  END IF;
+END $mig$;
 ```
 
-y la tabla ya está suscripta a realtime (lo agregaste en una corrida anterior, o Supabase la suscribió sola). No existe la variante `ADD TABLE IF NOT EXISTS` para publicaciones.
-
-## Solución
-
-Agrego una transformación más al script: envolver cada `ALTER PUBLICATION ... ADD TABLE ...;` en un `DO` block que ignora el error de duplicado:
+with a safer wrapper that catches Postgres duplicate errors:
 
 ```sql
-DO $pub$ BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE public.documents;
+DO $mig$ BEGIN
+  CREATE TYPE public.app_role AS ENUM (...);
 EXCEPTION WHEN duplicate_object THEN NULL;
-END $pub$;
+END $mig$;
 ```
 
-Esto cubre todas las tablas que las migraciones suscribieron a realtime sin tener que listarlas a mano.
+2. Apply that same pattern to all `CREATE TYPE public.* AS ENUM` blocks in the bundle, not just `app_role`, so the next existing enum does not fail after this one.
 
-Regenero el archivo como `sydney-bundle-v4.sql`.
+3. Preserve the previous v4 fix for:
 
-## Pasos para vos
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE ...
+```
 
-1. Te paso `sydney-bundle-v4.sql`.
-2. Pegalo en SQL Editor de Sydney → **Run**.
-3. Decime si termina ✅ o si aparece otro error.
+so duplicate realtime subscriptions are still ignored.
+
+4. Verify the generated SQL for:
+   - no nested `DO $$ BEGIN` / `DO $mig$ BEGIN` around enum creation,
+   - no raw unguarded `CREATE TYPE public.* AS ENUM`,
+   - all realtime `ALTER PUBLICATION ... ADD TABLE` statements still wrapped with `duplicate_object` handling.
+
+## Result
+
+You’ll get a new downloadable artifact: `sydney-bundle-v5.sql`, then you can paste that into Supabase Sydney SQL Editor and run it.
