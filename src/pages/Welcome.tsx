@@ -99,8 +99,31 @@ export default function Welcome() {
           ) : (
             <>
               <h1 className="font-display text-3xl text-primary-deep">Welcome aboard</h1>
-              <p className="text-muted-foreground mt-1">Set a password to finish setting up your space.</p>
+              <p className="text-muted-foreground mt-1">Before we begin — a few things to know about CareBridge.</p>
+
+              <div className="mt-6 rounded-2xl border border-border bg-card/60 p-5 space-y-3 text-sm leading-relaxed">
+                <p className="font-semibold text-primary-deep">CareBridge is here to help you navigate the health system.</p>
+                <ul className="list-disc pl-5 space-y-2 text-foreground/90">
+                  <li>We are a <strong>health navigation and advocacy service</strong> — not a medical or clinical service.</li>
+                  <li>We don't give medical advice, diagnosis, or treatment, and we don't replace your doctor.</li>
+                  <li>We help you understand, organise, and advocate for your care — you stay in control of every decision.</li>
+                  <li>In an emergency, always call <strong>000</strong>.</li>
+                </ul>
+              </div>
+
               <form onSubmit={submit} className="mt-6 space-y-4">
+                <label className="flex items-start gap-3 rounded-2xl border border-border bg-card/60 p-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acknowledged}
+                    onChange={(e) => setAcknowledged(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded accent-primary shrink-0"
+                  />
+                  <span className="text-sm text-foreground/90 leading-relaxed">
+                    I understand that CareBridge provides non-clinical health navigation and advocacy, does not provide medical advice or treatment, and does not replace my doctor or treating team. I understand that in an emergency I should call <strong>000</strong>.
+                  </span>
+                </label>
+
                 <div className="space-y-2">
                   <Label>Your email</Label>
                   <Input
@@ -122,7 +145,7 @@ export default function Welcome() {
                   <Label htmlFor="confirm">Confirm password</Label>
                   <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={8} className="h-12 rounded-2xl bg-card" required />
                 </div>
-                <Button type="submit" disabled={submitting} className="w-full h-12 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-soft">
+                <Button type="submit" disabled={submitting || !acknowledged} className="w-full h-12 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-soft">
                   {submitting ? "Please wait…" : "Enter my space"}
                 </Button>
               </form>
