@@ -18,6 +18,9 @@ import { MiniUpcomingAppointments } from "@/components/ocean/MiniUpcomingAppoint
 import { ClientEngagementBar } from "@/components/ocean/ClientEngagementBar";
 import { useOwnClientProgress } from "@/lib/client-progress";
 import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
+import { ClientAgreementsPanel } from "@/components/ocean/ClientAgreementsPanel";
+import { PaymentLinkField } from "@/components/ocean/PaymentLinkField";
+import { useAgreements } from "@/lib/agreements-store";
 import { CopyInviteLinkButton } from "@/components/ocean/CopyInviteLinkButton";
 import { EmailChangeSection, EmailChangeAuditLog } from "@/components/ocean/EmailChangeSection";
 import { supabase } from "@/integrations/supabase/client";
