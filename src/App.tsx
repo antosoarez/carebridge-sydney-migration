@@ -32,6 +32,7 @@ import AvailabilityReceived from "./pages/AvailabilityReceived";
 import AvailabilityConfirm from "./pages/AvailabilityConfirm";
 import ClientAvailabilityList from "./pages/ClientAvailabilityList";
 import ClientAvailabilityRespond from "./pages/ClientAvailabilityRespond";
+import CodeOfConduct from "./pages/CodeOfConduct";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/client/brain-dump" element={<C><BrainDump role="client" /></C>} />
             <Route path="/client/todo" element={<C><TodoList role="client" /></C>} />
             <Route path="/client/settings" element={<C><Settings /></C>} />
+            <Route path="/client/code-of-conduct" element={<C><CodeOfConduct /></C>} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/reset-password" element={<ResetPassword />} />
