@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Mail, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Mail, LogOut, ScrollText, ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { MfaSection } from "@/components/ocean/MfaSection";
 import { EmailChangeSection } from "@/components/ocean/EmailChangeSection";
 import { NotificationSettingsCard } from "@/components/ocean/NotificationSettingsCard";
@@ -127,6 +127,23 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground mt-1">Reusable email drafts will appear here.</p>
               <Button disabled className="mt-4 rounded-2xl opacity-60">Create a template — coming soon</Button>
             </div>
+          </section>
+        )}
+
+        {role === "client" && (
+          <section className="glass-card p-6 lg:col-span-2 space-y-3">
+            <h2 className="font-display text-xl text-primary-deep">Policies</h2>
+            <Link
+              to="/client/code-of-conduct"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/40 hover:bg-secondary transition-calm group"
+            >
+              <ScrollText className="h-5 w-5 text-accent shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-primary-deep">Code of Conduct & Complaints</div>
+                <div className="text-xs text-muted-foreground">How we work with you, and how to raise a concern.</div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary-deep" />
+            </Link>
           </section>
         )}
 
