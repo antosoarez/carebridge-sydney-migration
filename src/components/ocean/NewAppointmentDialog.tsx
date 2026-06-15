@@ -131,6 +131,13 @@ export function NewAppointmentDialog({ onCreated }: { onCreated: () => void }) {
             <div className="space-y-2">
               <Label>Title</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Oncology follow-up" />
+              <button
+                type="button"
+                onClick={() => setTitle("Free discovery call")}
+                className="text-xs text-primary underline self-start"
+              >
+                Use “Free discovery call” preset
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
