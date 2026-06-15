@@ -39,3 +39,5 @@ project_id = "umuvklhpppuchijbvsae"
     verify_jwt = false
   [functions.public-enquiry-form]
     verify_jwt = false
+  [functions.queue-message-notifications]
+    verify_jwt = true
