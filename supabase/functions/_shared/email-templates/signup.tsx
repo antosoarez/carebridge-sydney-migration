@@ -50,6 +50,12 @@ export const SignupEmail = ({
         <Button style={button} href={confirmationUrl}>
           Verify Email
         </Button>
+        <Text style={noticeTitle}>Not for emergencies</Text>
+        <Text style={noticeText}>
+          CareBridge is not a crisis service. If you or someone else is in danger, call{' '}
+          <Link href="tel:000" style={link}>000</Link> or contact Lifeline on{' '}
+          <Link href="tel:131114" style={link}>13 11 14</Link>.
+        </Text>
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
@@ -86,3 +92,21 @@ const button = {
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: 'hsl(210, 15%, 55%)', margin: '32px 0 0' }
+const noticeTitle = {
+  fontSize: '13px',
+  fontWeight: 700 as const,
+  color: 'hsl(0, 65%, 45%)',
+  margin: '28px 0 6px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+}
+const noticeText = {
+  fontSize: '13px',
+  color: 'hsl(210, 15%, 35%)',
+  lineHeight: '1.6',
+  margin: '0',
+  padding: '12px 14px',
+  backgroundColor: 'hsl(0, 70%, 97%)',
+  border: '1px solid hsl(0, 65%, 88%)',
+  borderRadius: '12px',
+}
