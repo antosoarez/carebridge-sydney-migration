@@ -15,8 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const role = window.location.pathname.startsWith("/advocate") ? "advocate" : "client";
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
