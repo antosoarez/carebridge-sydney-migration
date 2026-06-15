@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { SEO } from "@/components/SEO";
+import { EmergencyNotice } from "@/components/ocean/EmergencyNotice";
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -73,6 +74,7 @@ export default function Welcome() {
           alt="CareBridge Perth — find clarity, prepare with confidence, be heard"
           className="w-full mb-8 rounded-3xl shadow-soft"
         />
+        <EmergencyNotice className="mb-4" />
         <div className="glass-card p-8 shadow-float">
           {linkBroken ? (
             <>
