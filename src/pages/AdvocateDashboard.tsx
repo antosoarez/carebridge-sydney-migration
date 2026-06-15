@@ -6,7 +6,7 @@ import { useClients } from "@/lib/clients-store";
 import { useAppointments } from "@/lib/appointments-store";
 import { countdownLabel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, ClipboardList, Heart, MessageCircle, Plus, Sparkles, Users, Wand2 } from "lucide-react";
+import { ArrowRight, CalendarRange, Heart, MessageCircle, Plus, Sparkles, Wand2 } from "lucide-react";
 import { PendingDocumentsBanner } from "@/components/ocean/PendingDocumentsBanner";
 import { InviteClientDialog } from "@/components/ocean/InviteClientDialog";
 import { supabase } from "@/integrations/supabase/client";
