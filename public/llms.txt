@@ -1,0 +1,9 @@
+# CareBridge Perth
+
+> Calm Care — a gentle, professional platform that helps healthcare advocates and their clients move through medical journeys together, one calm step at a time.
+
+CareBridge Perth gives advocates and the people they support a shared, low-pressure space for tasks, messages, documents, calendars, and quiet notes. The product is invite-only: advocates onboard their clients, and most pages live behind authentication.
+
+## Pages
+
+- [Sign in](/): Sign in or accept an advocate invite to access your space.
