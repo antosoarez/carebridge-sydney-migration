@@ -14,6 +14,7 @@ import CalendarPage from "./pages/Calendar";
 import DocumentsPage from "./pages/Documents";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
+import SettingsAutomations from "./pages/SettingsAutomations";
 import Messages from "./pages/Messages";
 import BrainDump from "./pages/BrainDump";
 import TodoList from "./pages/TodoList";
