@@ -410,7 +410,11 @@ export default function AdvocateClientDetail() {
 
           <ClientReportsSection clientId={client.id} viewerRole="advocate" />
 
+          <ClientAgreementsPanel clientId={client.id} asAdvocate />
+
           <ClientPaymentTracker clientId={client.id} clientName={client.name.split(" ")[0]} />
+
+          <PaymentLinkSection clientId={client.id} />
 
           <InternalNotesCard clientId={client.id} />
 
