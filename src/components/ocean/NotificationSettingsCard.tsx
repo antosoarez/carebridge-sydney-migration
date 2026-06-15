@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import {
   isPushSupported,
+  isPreviewContext,
   getPermission,
   subscribeAndStore,
   unsubscribeLocally,
