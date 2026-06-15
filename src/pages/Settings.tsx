@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Mail } from "lucide-react";
+import { Mail, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { MfaSection } from "@/components/ocean/MfaSection";
 import { EmailChangeSection } from "@/components/ocean/EmailChangeSection";
 import { NotificationSettingsCard } from "@/components/ocean/NotificationSettingsCard";
@@ -14,8 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const role = window.location.pathname.startsWith("/advocate") ? "advocate" : "client";
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -122,6 +129,18 @@ export default function Settings() {
             </div>
           </section>
         )}
+
+        <section className="glass-card p-6 lg:col-span-2 space-y-3">
+          <h2 className="font-display text-xl text-primary-deep">Account</h2>
+          <p className="text-xs text-muted-foreground">Sign out of CareBridge Perth on this device.</p>
+          <Button
+            variant="outline"
+            onClick={handleSignOut}
+            className="rounded-2xl h-11 gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
+        </section>
       </div>
     </AppShell>
   );
