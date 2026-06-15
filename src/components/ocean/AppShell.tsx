@@ -20,6 +20,7 @@ import { registerServiceWorker } from "@/lib/push-subscription";
 import { FloatingActionStack } from "@/components/ocean/FloatingActionStack";
 import { NotificationBell } from "@/components/ocean/NotificationBell";
 import { SEO } from "@/components/SEO";
+import { EmergencyNotice } from "@/components/ocean/EmergencyNotice";
 
 interface NavItem { to: string; label: string; icon: typeof Home; }
 
@@ -129,6 +130,8 @@ export function AppShell({ role, children, title, subtitle, seoTitle, seoDescrip
         </header>
 
         <div className="px-5 md:px-10 pt-6 md:pt-10 max-w-6xl mx-auto">
+          <EmergencyNotice className="mb-4" compact />
+
           {title && (
             <div className="mb-8 animate-fade-in">
               <div className="flex items-start justify-between gap-4">
