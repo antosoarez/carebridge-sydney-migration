@@ -134,7 +134,7 @@ function ThreadView({
 
   const handleSend = async () => {
     const body = draft.trim();
-    if (!body || sending) return;
+    if ((!body && pendingFiles.length === 0) || sending) return;
     setSending(true);
     const { data, error } = await supabase
       .from("messages")
@@ -142,12 +142,12 @@ function ThreadView({
         thread_id: threadId,
         sender_id: currentUserId,
         sender_role: viewerRole, // trigger will overwrite anyway
-        body,
+        body: body || "📎 Attachment",
       })
       .select("*")
       .single();
-    setSending(false);
     if (error || !data) {
+      setSending(false);
       toast({
         title: "Couldn't send",
         description: error?.message ?? "Please try again in a moment.",
@@ -155,10 +155,61 @@ function ThreadView({
       });
       return;
     }
+    const newMsg = data as Message;
+
+    // Upload attachments (if any) tied to the new message
+    if (pendingFiles.length > 0) {
+      const failures: string[] = [];
+      for (const file of pendingFiles) {
+        const res = await uploadAttachment({
+          threadId,
+          messageId: newMsg.id,
+          uploaderId: currentUserId,
+          file,
+        });
+        if (res.error) failures.push(res.error);
+      }
+      if (failures.length > 0) {
+        toast({
+          title: "Some attachments didn't upload",
+          description: failures.join(" "),
+          variant: "destructive",
+        });
+      }
+      reloadAttachments();
+    }
+
+    setSending(false);
     setDraft("");
+    setPendingFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setMessages((prev) =>
-      prev.some((m) => m.id === (data as Message).id) ? prev : [...prev, data as Message]
+      prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
     );
+  };
+
+  const handleFilesPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+    for (const f of files) {
+      const v = validateAttachment(f);
+      if (v.ok) accepted.push(f);
+      else rejected.push(v.reason);
+    }
+    if (rejected.length > 0) {
+      toast({
+        title: "Some files were skipped",
+        description: rejected.join(" "),
+        variant: "destructive",
+      });
+    }
+    setPendingFiles((prev) => [...prev, ...accepted]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePending = (idx: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
