@@ -33,7 +33,7 @@ export type MessageAttachment = {
   created_at: string;
 };
 
-export type ValidateResult = { ok: true } | { ok: false; reason: string };
+export type ValidateResult = { ok: true; reason?: undefined } | { ok: false; reason: string };
 
 export function validateAttachment(file: File): ValidateResult {
   if (file.size <= 0) return { ok: false, reason: `${file.name} is empty.` };
