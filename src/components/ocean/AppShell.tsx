@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { useUnreadMessages } from "@/lib/use-unread-messages";
 import { useMessageChime } from "@/lib/use-message-chime";
 import { useNewMessageToasts } from "@/lib/use-new-message-toasts";
+import { useInboundEnquiries } from "@/lib/use-inbound-enquiries";
 import { useReminderScheduler } from "@/lib/use-reminder-scheduler";
 import { useAttentionBadges } from "@/lib/attention-badges";
 import { UpcomingAppointmentNudge } from "@/components/ocean/UpcomingAppointmentNudge";
@@ -59,10 +60,15 @@ export function AppShell({ role, children, title, subtitle, seoTitle, seoDescrip
   const { total: unread } = useUnreadMessages();
   useMessageChime(unread);
   useNewMessageToasts(role);
+  const { newCount: inboundNew } = useInboundEnquiries(role === "advocate");
   useReminderScheduler(user?.id);
   const attention = useAttentionBadges(role);
   const handleSignOut = async () => { await signOut(); navigate("/"); };
-  const badgeFor = (to: string) => (to.endsWith("/messages") && unread > 0 ? unread : 0);
+  const badgeFor = (to: string) => {
+    if (!to.endsWith("/messages")) return 0;
+    const extra = role === "advocate" ? inboundNew : 0;
+    return unread + extra;
+  };
   const showDot = (to: string) =>
     (to.endsWith("/calendar") && attention.calendar) ||
     (to.endsWith("/todo") && attention.todo);
