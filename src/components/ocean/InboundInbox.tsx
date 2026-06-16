@@ -252,6 +252,21 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
     }
   };
 
+  const deleteEnquiry = async () => {
+    if (!active) return;
+    setDeleting(true);
+    const { error } = await supabase.from("inbound_messages").delete().eq("id", active.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: "Couldn't delete", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Enquiry deleted" });
+    setDeleteOpen(false);
+    setActiveId(null);
+    refresh();
+  };
+
   const newCount = counts["New"] ?? 0;
 
   return (
