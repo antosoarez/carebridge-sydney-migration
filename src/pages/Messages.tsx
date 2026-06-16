@@ -7,11 +7,20 @@ import { ClientAvatar } from "@/components/ocean/ClientAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { ArrowLeft, MessageCircle, Send, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, MessageCircle, Send, Check, CheckCheck, Paperclip, X, FileText, Download } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import type { ClientColourKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useUnreadMessages, markThreadRead } from "@/lib/use-unread-messages";
+import {
+  validateAttachment,
+  uploadAttachment,
+  getSignedUrl,
+  useMessageAttachments,
+  isImage,
+  formatBytes,
+  type MessageAttachment,
+} from "@/lib/attachments-store";
 
 // ---------- types ----------
 type Thread = {
