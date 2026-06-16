@@ -30,6 +30,8 @@ import { LifecycleStatusSelect } from "@/components/ocean/LifecycleStatusSelect"
 import { UrgencyBadge } from "@/components/ocean/UrgencyBadge";
 import { ClientCasesPanel } from "@/components/ocean/ClientCasesPanel";
 import { ClientCrmSummary } from "@/components/ocean/ClientCrmSummary";
+import { NavigationIntakeTab } from "@/components/ocean/NavigationIntakeTab";
+import { AgreementStatusList } from "@/components/ocean/AgreementStatusList";
 
 function countdownLabel(toDate: string | null): string | null {
   if (!toDate) return null;
@@ -394,6 +396,8 @@ export default function AdvocateClientDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <NavigationIntakeTab clientId={client.id} />
+          <AgreementStatusList clientId={client.id} />
           <EmotionWaveCard clientId={client.id} viewerRole="advocate" />
           <LowMoodFlagChip clientId={client.id} />
           <ClientCasesPanel clientId={client.id} />
