@@ -289,18 +289,24 @@ function ThreadView({
             const showSeen = mine && m.id === lastSeenMineId;
             return (
               <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[80%] flex flex-col", mine ? "items-end" : "items-start")}>
-                  <div
-                    className={cn(
-                      "rounded-2xl px-4 py-2.5 shadow-soft whitespace-pre-wrap break-words text-sm leading-relaxed",
-                      mine
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-card text-foreground border border-border/40 rounded-bl-md"
-                    )}
-                  >
-                    {m.body}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/80 mt-1 px-1 flex items-center gap-1">
+                <div className={cn("max-w-[80%] flex flex-col gap-1.5", mine ? "items-end" : "items-start")}>
+                  {m.body && m.body !== "📎 Attachment" && (
+                    <div
+                      className={cn(
+                        "rounded-2xl px-4 py-2.5 shadow-soft whitespace-pre-wrap break-words text-sm leading-relaxed",
+                        mine
+                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          : "bg-card text-foreground border border-border/40 rounded-bl-md"
+                      )}
+                    >
+                      {m.body}
+                    </div>
+                  )}
+                  <AttachmentList
+                    attachments={attachmentsByMessage.get(m.id) ?? []}
+                    mine={mine}
+                  />
+                  <span className="text-[10px] text-muted-foreground/80 mt-0.5 px-1 flex items-center gap-1">
                     {formatBubbleTime(m.created_at)}
                     {mine && (
                       showSeen ? (
@@ -321,7 +327,48 @@ function ThreadView({
 
       {/* Composer */}
       <div className="border-t border-border/40 p-3 bg-card/60 backdrop-blur-sm">
+        {pendingFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {pendingFiles.map((f, i) => (
+              <div
+                key={`${f.name}-${i}`}
+                className="flex items-center gap-2 rounded-xl bg-secondary/60 border border-border/40 px-2.5 py-1.5 text-xs"
+              >
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="max-w-[160px] truncate" title={f.name}>{f.name}</span>
+                <span className="text-muted-foreground">{formatBytes(f.size)}</span>
+                <button
+                  type="button"
+                  onClick={() => removePending(i)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  aria-label={`Remove ${f.name}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFilesPicked}
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Attach a file"
+            className="h-12 w-12 rounded-2xl shrink-0"
+            disabled={sending}
+          >
+            <Paperclip className="h-5 w-5" />
+          </Button>
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -333,7 +380,7 @@ function ThreadView({
           />
           <Button
             onClick={handleSend}
-            disabled={!draft.trim() || sending}
+            disabled={(!draft.trim() && pendingFiles.length === 0) || sending}
             size="icon"
             aria-label="Send message"
             className="h-12 w-12 rounded-2xl shrink-0"
@@ -343,6 +390,104 @@ function ThreadView({
         </div>
       </div>
     </div>
+  );
+}
+
+// ---------- Attachment rendering ----------
+function AttachmentList({
+  attachments,
+  mine,
+}: {
+  attachments: MessageAttachment[];
+  mine: boolean;
+}) {
+  if (attachments.length === 0) return null;
+  return (
+    <div className={cn("flex flex-col gap-1.5", mine ? "items-end" : "items-start")}>
+      {attachments.map((a) =>
+        isImage(a.content_type) ? (
+          <AttachmentImage key={a.id} attachment={a} />
+        ) : (
+          <AttachmentFile key={a.id} attachment={a} mine={mine} />
+        )
+      )}
+    </div>
+  );
+}
+
+function AttachmentImage({ attachment }: { attachment: MessageAttachment }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getSignedUrl(attachment.storage_path).then((u) => {
+      if (!cancelled) setUrl(u);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [attachment.storage_path]);
+  if (!url) {
+    return (
+      <div className="h-32 w-44 rounded-2xl bg-secondary/40 animate-pulse" aria-label="Loading image" />
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block rounded-2xl overflow-hidden shadow-soft border border-border/40 max-w-[240px]"
+      aria-label={`Open ${attachment.filename}`}
+    >
+      <img
+        src={url}
+        alt={attachment.filename}
+        className="block max-h-64 w-auto object-cover"
+        loading="lazy"
+      />
+    </a>
+  );
+}
+
+function AttachmentFile({
+  attachment,
+  mine,
+}: {
+  attachment: MessageAttachment;
+  mine: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const handleClick = async () => {
+    setBusy(true);
+    const url = await getSignedUrl(attachment.storage_path);
+    setBusy(false);
+    if (!url) {
+      toast({ title: "Couldn't open file", description: "Please try again.", variant: "destructive" });
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={busy}
+      className={cn(
+        "flex items-center gap-2 rounded-2xl px-3 py-2 text-sm shadow-soft border transition-calm max-w-[280px]",
+        mine
+          ? "bg-primary/10 border-primary/30 text-primary-deep hover:bg-primary/15"
+          : "bg-card border-border/40 text-foreground hover:bg-secondary/40"
+      )}
+    >
+      <FileText className="h-4 w-4 shrink-0" />
+      <span className="flex-1 min-w-0 truncate text-left" title={attachment.filename}>
+        {attachment.filename}
+      </span>
+      <span className="text-[10px] text-muted-foreground shrink-0">
+        {formatBytes(attachment.size_bytes)}
+      </span>
+      <Download className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+    </button>
   );
 }
 
