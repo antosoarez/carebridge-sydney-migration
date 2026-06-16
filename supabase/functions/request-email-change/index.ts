@@ -156,7 +156,8 @@ Deno.serve(async (req) => {
         text: verifyEmailChangeText(verifyLink, newEmailRaw, fullName),
       });
     } catch (e) {
-      return json({ error: "We couldn't send the confirmation email — please try again in a moment.", detail: String(e) }, 502);
+      console.error("request-email-change: resend send failed", e);
+      return json({ error: "We couldn't send the confirmation email — please try again in a moment." }, 502);
     }
 
     if (oldEmail) {
