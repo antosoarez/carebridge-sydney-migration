@@ -58,11 +58,55 @@ Deno.serve(async (req) => {
       return json({ error: "Temporary password must be at least 8 characters." }, 400);
     }
 
-    // Duplicate check via listUsers (filter by email)
-    const { data: existing } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const dup = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
+    // Duplicate check — paginate through all auth users
+    let dup: { id: string; email?: string | null } | null = null;
+    for (let page = 1; page <= 20; page++) {
+      const { data: existing, error: listErr } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (listErr) break;
+      const found = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
+      if (found) { dup = found; break; }
+      if (!existing?.users || existing.users.length < 200) break;
+    }
+
     if (dup) {
-      return json({ error: "An account with this email already exists." }, 409);
+      // If the auth user is orphaned (no profile row or never activated), reuse it instead of failing.
+      const { data: existingProfile } = await admin
+        .from("profiles")
+        .select("id, activated_at")
+        .eq("id", dup.id)
+        .maybeSingle();
+
+      const isOrphan = !existingProfile || existingProfile.activated_at === null;
+      if (!isOrphan) {
+        return json({ error: "An account with this email already exists." }, 409);
+      }
+
+      // Reuse the orphaned account.
+      if (method === "direct") {
+        await admin.auth.admin.updateUserById(dup.id, {
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: { full_name: fullName },
+        });
+      }
+      await admin
+        .from("profiles")
+        .update({
+          full_name: fullName,
+          must_change_password: method === "direct",
+          activated_at: null,
+        })
+        .eq("id", dup.id);
+
+      if (method === "invite") {
+        // Re-send invite link
+        await admin.auth.admin.inviteUserByEmail(email, {
+          data: { full_name: fullName },
+          redirectTo: redirectTo || undefined,
+        }).catch(() => {});
+      }
+
+      return json({ ok: true, user_id: dup.id, method, reused: true });
     }
 
     let newUserId: string | null = null;
