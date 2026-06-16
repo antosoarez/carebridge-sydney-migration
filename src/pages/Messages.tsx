@@ -332,6 +332,16 @@ function ThreadView({
                         <Check className="h-3 w-3 text-muted-foreground/60" aria-label="Sent" />
                       ) : null
                     )}
+                    {mine && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMessage(m.id)}
+                        aria-label="Delete message"
+                        className="ml-1 text-muted-foreground/50 hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
                   </span>
                 </div>
               </div>
