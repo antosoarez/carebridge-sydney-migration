@@ -394,6 +394,14 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
                       <UserPlus className="h-3.5 w-3.5" /> Convert to client
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </Button>
                 </div>
               </header>
 
