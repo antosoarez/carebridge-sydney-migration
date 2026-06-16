@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { Inbox, ExternalLink, Plus, UserPlus, Loader2, Save } from "lucide-react";
+import { Inbox, ExternalLink, Plus, UserPlus, Loader2, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/brain-dump-store";
 
