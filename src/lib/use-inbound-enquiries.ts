@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -45,11 +45,12 @@ export function useInboundEnquiries(enabled: boolean) {
           // first connect — though INSERT subs are forward-only anyway).
           if (initialized.current) {
             const senderName = (row.name && row.name.trim()) || "someone new";
-            toast({
-              title: "New enquiry",
-              description: `New enquiry from ${senderName}`,
-              onClick: () => navigate(`/advocate/messages?enquiry=${row.id}`),
-            } as any);
+            toast(`New enquiry from ${senderName}`, {
+              action: {
+                label: "Open",
+                onClick: () => navigate(`/advocate/messages?enquiry=${row.id}`),
+              },
+            });
           }
           void loadCount();
         }
