@@ -60,7 +60,7 @@ export default function Welcome() {
       try { await supabase.functions.invoke("mark-activated", { body: {} }); } catch { /* non-blocking */ }
       toast({ title: "Welcome aboard 🌊", description: "Your account is ready." });
       // Invited clients always get the 'client' role via handle_new_user trigger.
-      navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+      navigate(role === "advocate" ? "/advocate" : "/client/onboarding", { replace: true });
     } catch (err: any) {
       toast({ title: "Couldn't set password", description: err.message, variant: "destructive" });
     } finally {
