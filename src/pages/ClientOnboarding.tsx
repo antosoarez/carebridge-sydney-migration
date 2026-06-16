@@ -226,9 +226,9 @@ export default function ClientOnboarding() {
                 ))}
               </ul>
               <a
-                href="/privacy"
+                href="https://carebridgeperth.com/privacy.html"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-block text-sm text-primary-deep underline underline-offset-4"
               >
                 {t.s3_privacyLink}
