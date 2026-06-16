@@ -212,6 +212,21 @@ function ThreadView({
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!window.confirm("Delete this message? This cannot be undone.")) return;
+    const prev = messages;
+    setMessages((curr) => curr.filter((m) => m.id !== messageId));
+    const { error } = await supabase.from("messages").delete().eq("id", messageId);
+    if (error) {
+      setMessages(prev);
+      toast({
+        title: "Couldn't delete",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
