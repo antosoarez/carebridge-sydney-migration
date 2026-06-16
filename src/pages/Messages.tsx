@@ -86,8 +86,13 @@ function ThreadView({
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastCountRef = useRef(0);
+  const messageIds = messages.map((m) => m.id);
+  const { byMessage: attachmentsByMessage, reload: reloadAttachments } =
+    useMessageAttachments(messageIds);
 
   const fetchMessages = useCallback(async () => {
     const { data, error } = await supabase
