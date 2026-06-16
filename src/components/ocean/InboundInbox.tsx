@@ -111,6 +111,8 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
   const [convertOpen, setConvertOpen] = useState(false);
   const [converting, setConverting] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // When the page is opened with ?enquiry=<id>, jump to that enquiry and
   // switch to the "All" tab so it's visible regardless of current status.
