@@ -7,7 +7,7 @@ import { ClientAvatar } from "@/components/ocean/ClientAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { ArrowLeft, MessageCircle, Send, Check, CheckCheck, Paperclip, X, FileText, Download } from "lucide-react";
+import { ArrowLeft, MessageCircle, Send, Check, CheckCheck, Paperclip, X, FileText, Download, Trash2 } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import type { ClientColourKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -212,6 +212,21 @@ function ThreadView({
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!window.confirm("Delete this message? This cannot be undone.")) return;
+    const prev = messages;
+    setMessages((curr) => curr.filter((m) => m.id !== messageId));
+    const { error } = await supabase.from("messages").delete().eq("id", messageId);
+    if (error) {
+      setMessages(prev);
+      toast({
+        title: "Couldn't delete",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -316,6 +331,16 @@ function ThreadView({
                       ) : mine ? (
                         <Check className="h-3 w-3 text-muted-foreground/60" aria-label="Sent" />
                       ) : null
+                    )}
+                    {mine && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMessage(m.id)}
+                        aria-label="Delete message"
+                        className="ml-1 text-muted-foreground/50 hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
                     )}
                   </span>
                 </div>

@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { Inbox, ExternalLink, Plus, UserPlus, Loader2, Save } from "lucide-react";
+import { Inbox, ExternalLink, Plus, UserPlus, Loader2, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/brain-dump-store";
 
@@ -111,6 +111,8 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
   const [convertOpen, setConvertOpen] = useState(false);
   const [converting, setConverting] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // When the page is opened with ?enquiry=<id>, jump to that enquiry and
   // switch to the "All" tab so it's visible regardless of current status.
@@ -250,6 +252,21 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
     }
   };
 
+  const deleteEnquiry = async () => {
+    if (!active) return;
+    setDeleting(true);
+    const { error } = await supabase.from("inbound_messages").delete().eq("id", active.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: "Couldn't delete", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Enquiry deleted" });
+    setDeleteOpen(false);
+    setActiveId(null);
+    refresh();
+  };
+
   const newCount = counts["New"] ?? 0;
 
   return (
@@ -377,6 +394,14 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
                       <UserPlus className="h-3.5 w-3.5" /> Convert to client
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </Button>
                 </div>
               </header>
 
@@ -498,6 +523,31 @@ export function InboundInbox({ focusEnquiryId }: { focusEnquiryId?: string | nul
             >
               {converting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />}
               Send invite & convert
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this enquiry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the enquiry from <span className="font-semibold">{active?.name}</span>
+              {active?.email ? <> (<span className="font-semibold">{active.email}</span>)</> : null}.
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); deleteEnquiry(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              Delete enquiry
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
