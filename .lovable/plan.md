@@ -1,117 +1,92 @@
-## What this plan does
+# Fix: clients invisible in advocate's Clients list
 
-I write **every** change as a file in your repo: SQL migration, new React components, and edited edge function source. Nothing touches the live database, storage, or deployed functions. When you enable Cloud (or paste the SQL into the Supabase SQL editor yourself), the app lights up.
+## Step 1 — Diagnosis (per link in the chain)
 
-**Up-front warning, so there are no surprises:** until the migration runs, the new UI tabs will show empty states or error toasts where they query missing tables. The existing app continues to work as it does today — I am not removing anything.
+a) **profiles row with role='client'** — ✅ created. `handle_new_user()` trigger (migration `20260516101733`) inserts a row into `public.profiles` and a row into `public.user_roles` with role `'client'` for every new auth user (advocate is only the fixed `hello@carebridgeperth.com` email).
 
----
+b) **advocate_id / owner on profile** — N/A. This codebase is single-advocate: there is no per-client `advocate_id` column on `profiles`. The advocate is resolved everywhere via `SELECT user_id FROM user_roles WHERE role='advocate' ORDER BY created_at LIMIT 1` (see `message_threads` seeding, availability requests, etc.). No change needed.
 
-## Part 1 — Client linkage + intake visibility
+c) **lifecycle_status after onboarding** — partially. Column defaults to `'New enquiry'` and migration `20260612064353` backfilled `'Active'` for any user with `activated_at IS NOT NULL`. The advocate's Clients list does NOT filter on lifecycle, so this is not what's hiding clients — but we'll still backfill stragglers.
 
-### Migration file: `supabase/migrations/20260616120000_repair_and_link.sql`
-
-One idempotent migration. Sections:
-
-1. **`profiles` columns** (ADD COLUMN IF NOT EXISTS): `role` (default `'client'`), `lifecycle_stage`, `advocate_id uuid REFERENCES auth.users`, `onboarding_completed_at`, `preferred_name`, `preferred_language`, `preferred_contact_method`, `navigation_intake_seen_at`.
-2. **Tables** (CREATE TABLE IF NOT EXISTS, with GRANTs + RLS):
-   - `client_consents` (append-only audit: scope ack + privacy consent + timestamp)
-   - `client_navigation_intake` (Part B answers: help_with, whats_going_on, steps_taken, what_matters_most, updated_at)
-   - `agreement_documents` (Service Agreement / Privacy Notice / Scope Ack / Recording Consent — seeded)
-   - `client_agreement_acceptances` (which client accepted which doc, when)
-   - `message_threads` (unique per client/advocate pair)
-   - `messages` (thread_id, sender_id, body, created_at)
-   - `message_attachments` (message_id, storage_path, filename, content_type, size_bytes)
-3. **RLS policies**:
-   - `profiles`: advocate can SELECT rows where `advocate_id = auth.uid()`; client can SELECT/UPDATE their own row.
-   - `client_consents`, `client_navigation_intake`, `client_agreement_acceptances`: client RW own rows; advocate SELECT on rows whose `user_id` profile has `advocate_id = auth.uid()` (via `has_advocate_link(uuid)` SECURITY DEFINER helper to avoid recursion).
-   - `message_threads` / `messages` / `message_attachments`: only the two participants.
-4. **Triggers**:
-   - On profile insert/update where `advocate_id` becomes non-null → insert `message_threads` row (ON CONFLICT DO NOTHING).
-   - On profile `onboarding_completed_at` set → ensure `client_cases` row exists.
-5. **Storage**: `INSERT INTO storage.buckets` for `message-attachments` (private). RLS on `storage.objects` restricted to thread participants via `message_attachments` join.
-6. **Backfill** (the 3 existing clients): a generic block that UPDATEs every existing `profiles` row with `role='client' AND advocate_id IS NULL` to set `advocate_id = (SELECT id FROM profiles WHERE role='advocate' LIMIT 1)` and `lifecycle_stage='active'`. The trigger above then auto-creates threads/cases.
-
-I will write the full SQL but **not apply it**.
-
-### Edge function: `supabase/functions/admin-create-client/index.ts`
-
-Edit the profile-insert block so newly created clients get `role='client'`, `lifecycle_stage='active'`, and `advocate_id = <calling advocate's uid>`. Source-only edit; needs deploy to take effect.
-
-### Edge function: `supabase/functions/queue-message-notifications/index.ts`
-
-Strip any message-body content from the notification payload. Send only "You have a new message — log in to view." plus a deep link. Source-only edit; needs deploy.
-
-### New React components (these render gracefully when tables are missing — empty state, not crash)
-
-- `src/components/ocean/NavigationIntakeTab.tsx` — read-only display of: consents (✓/pending + timestamp), about-you (preferred name/language/contact), Part B answers. Wrapped in try/catch on the query; shows "No intake submitted yet" on PGRST error or empty.
-- `src/components/ocean/AgreementStatusList.tsx` — 4 fixed rows (Service Agreement, Privacy Notice, Scope Acknowledgment, Recording Consent) with Accepted/Pending chip + timestamp.
-- Mount both inside `src/pages/AdvocateClientDetail.tsx` as a new "Intake" tab (using the existing `Tabs` shadcn component already used on that page).
-
-### Updated `src/pages/ClientOnboarding.tsx`
-
-On Finish: in addition to existing logic, write `advocate_id` to the client's profile (using a `get_default_advocate()` RPC defined in the migration that returns the single advocate's id). Existing privacy-link fix stays.
-
----
-
-## Part 2 — Messaging
-
-### Migration (included in the same SQL file above)
-
-`message_threads` + `messages` tables, RLS, auto-thread trigger — already in the SQL block above.
-
-### Client-side store changes
-
-- `src/lib/messages-store.ts`: replace the localStorage implementation with a Supabase-backed one (`message_threads` + `messages` + realtime subscription on `messages` filtered by `thread_id`).
-- Same hook signatures (`useThread`, `useThreadSummaries`, `useUnreadTotal`) so `Messages.tsx`, `AdvocateClientDetail.tsx`, `InboundInbox.tsx` keep working unchanged.
-
----
-
-## Part 3 — Attachments
-
-### New file: `src/lib/attachments-store.ts`
-
-- `uploadAttachment(threadId, messageId, file)` — validates type (pdf/jpg/png/heic/webp/docx/xlsx/txt) and size (≤25 MB), uploads to `message-attachments/<threadId>/<messageId>/<uuid>-<filename>`, inserts `message_attachments` row.
-- `getSignedUrl(path)` — returns a 60-second signed URL.
-
-### Updated `src/pages/Messages.tsx` + `src/pages/AdvocateClientDetail.tsx` message composer
-
-- Paperclip button → file picker (multi).
-- Below input: pending attachments list with remove (✕).
-- In bubbles: image attachments rendered as thumbnails (lazy-loaded via signed URL); non-image as `<a download>` with filename + size.
-- 25 MB / type validation client-side with toast on failure.
-
-### Region note
-
-Bucket is created in your project's existing Supabase region. If your project is already provisioned in **ap-southeast-2 (Sydney)** the bucket is Sydney by default; if it's elsewhere the bucket lives there. Storage region is set per-project at creation time — I can't change it from a migration. Tell me if you want me to verify your project's region in the plan output.
-
----
-
-## Files written by this plan
-
+d) **Clients list query** — `src/lib/clients-store.ts` runs:
 ```
-supabase/migrations/20260616120000_repair_and_link.sql      (NEW)
-supabase/functions/admin-create-client/index.ts             (edit)
-supabase/functions/queue-message-notifications/index.ts     (edit)
-src/components/ocean/NavigationIntakeTab.tsx                (NEW)
-src/components/ocean/AgreementStatusList.tsx                (NEW)
-src/pages/AdvocateClientDetail.tsx                          (edit — add tab)
-src/pages/ClientOnboarding.tsx                              (edit — set advocate_id)
-src/lib/messages-store.ts                                   (rewrite — Supabase-backed)
-src/lib/attachments-store.ts                                (NEW)
-src/pages/Messages.tsx                                      (edit — attachment composer)
+supabase.from('user_roles').select('user_id').eq('role','client')
+```
+then loads `profiles` for those ids. No filter by `advocate_id` (correct for single-advocate). The query is fine **if** the advocate is allowed to read those `user_roles` rows.
+
+e) **RLS on user_roles** — 🔴 **BROKEN LINK**. The only SELECT policy on `public.user_roles` is:
+```
+USING (auth.uid() = user_id)
+```
+(migration `20260516101733` line 25-28). Advocates can therefore only see *their own* role row, so the query in (d) returns an empty list and the Clients page is always empty — regardless of how many clients have been created or onboarded.
+
+`profiles` itself has an advocate-wide SELECT policy, but the list never gets to `profiles` because step (d) finds zero ids first.
+
+## Step 2 — Fix
+
+New migration adds an advocate-wide SELECT policy on `user_roles` (mirroring the existing `profiles` policy), using the `has_role` security-definer to avoid recursion:
+
+```sql
+CREATE POLICY "Advocates can view all roles"
+  ON public.user_roles FOR SELECT
+  TO authenticated
+  USING (public.has_role(auth.uid(), 'advocate'));
 ```
 
-## What won't work until you enable Cloud (or paste SQL manually)
+No client/edge-function code changes are needed — `admin-create-client` already creates the auth user, and the existing `handle_new_user` trigger inserts the `profiles` row + `user_roles('client')` row. Once the advocate can read those role rows, `useClients()` returns the full list.
 
-- New Intake tab → "No intake submitted yet" until the migration runs.
-- Agreement chips → all "Pending" until the migration runs.
-- Messaging send → toast error "Could not find table public.messages" until the migration runs.
-- Attachments → upload fails (bucket missing) until the migration runs.
-- Edge function changes (`admin-create-client`, `queue-message-notifications`) → live functions keep running old code until deploy.
+## Step 3 — Backfill (same migration)
 
-The moment Cloud is enabled, I run the migration + redeploy the two edge functions and everything turns on. No further code changes needed.
+Idempotent fix-ups for any historical users stuck because the trigger didn't run, or lifecycle was never set:
 
-## Out of scope
+```sql
+-- a) Ensure every auth.users row has a profiles row
+INSERT INTO public.profiles (id, email, full_name)
+SELECT u.id, u.email, COALESCE(u.raw_user_meta_data->>'full_name','')
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL;
 
-- Push notifications for messages (existing chime/toast logic is untouched).
-- Migrating the 3 existing clients' historical localStorage messages into the new DB-backed thread (they start fresh; tell me if you want a one-time import).
+-- b) Ensure every profile has at least one user_roles row
+-- (advocate = fixed email, everyone else = client)
+INSERT INTO public.user_roles (user_id, role)
+SELECT p.id,
+       CASE WHEN lower(p.email) = 'hello@carebridgeperth.com'
+            THEN 'advocate'::public.app_role
+            ELSE 'client'::public.app_role
+       END
+FROM public.profiles p
+LEFT JOIN public.user_roles r ON r.user_id = p.id
+WHERE r.user_id IS NULL
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- c) Lifecycle backfill for clients who completed onboarding but stayed on default
+UPDATE public.profiles
+   SET lifecycle_status = 'Active'::public.client_lifecycle_status
+ WHERE activated_at IS NOT NULL
+   AND (lifecycle_status IS NULL OR lifecycle_status = 'New enquiry');
+
+UPDATE public.profiles
+   SET lifecycle_status = 'Invited'::public.client_lifecycle_status
+ WHERE activated_at IS NULL
+   AND must_change_password = true
+   AND (lifecycle_status IS NULL OR lifecycle_status = 'New enquiry');
+```
+
+## Step 4 — Verify
+
+After the migration runs:
+- Re-open `/advocate/clients`. The empty-state should disappear; converted/onboarded testers appear with name, email, lifecycle pill, status pill.
+- Clicking a card navigates to `/advocate/client/:id` (existing route, already permitted by the `profiles` "Advocates can view all profiles" policy).
+- No messaging/attachments/agreements code is touched.
+
+## Files
+
+- **NEW** `supabase/migrations/<timestamp>_advocate_roles_visibility.sql` — the policy + backfill above.
+- No frontend changes. No edge-function changes.
+
+## Technical notes
+
+- Policy uses `has_role(auth.uid(),'advocate')` (SECURITY DEFINER) to stay consistent with the existing `profiles` policy and avoid recursive RLS on `user_roles`.
+- The new policy is SELECT-only; the existing "Deny insert/update/delete to user_roles" policies remain, so advocates still cannot escalate privileges through the client.
+- Backfill statements are guarded with `LEFT JOIN ... IS NULL` / `ON CONFLICT DO NOTHING`, safe to re-run.

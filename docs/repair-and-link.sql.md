@@ -18,6 +18,54 @@ Supabase SQL editor in that order, then the block below.
 
 All statements are idempotent — safe to re-run.
 
+## ⚠️ Run this FIRST — fixes empty Clients list
+
+The advocate's Clients page is empty because `user_roles` only allows users to
+read their own role row, so the query `SELECT user_id FROM user_roles WHERE role='client'`
+returns 0 rows for the advocate. Paste this into the Supabase SQL editor:
+
+```sql
+-- Advocates can read all role rows (mirrors the profiles policy).
+DROP POLICY IF EXISTS "Advocates can view all roles" ON public.user_roles;
+CREATE POLICY "Advocates can view all roles"
+  ON public.user_roles FOR SELECT
+  TO authenticated
+  USING (public.has_role(auth.uid(), 'advocate'));
+
+-- Backfill (a): every auth.users row should have a profiles row.
+INSERT INTO public.profiles (id, email, full_name)
+SELECT u.id, u.email, COALESCE(u.raw_user_meta_data->>'full_name', '')
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL;
+
+-- Backfill (b): every profile should have a user_roles row.
+INSERT INTO public.user_roles (user_id, role)
+SELECT p.id,
+       CASE WHEN lower(p.email) = 'hello@carebridgeperth.com'
+            THEN 'advocate'::public.app_role
+            ELSE 'client'::public.app_role
+       END
+FROM public.profiles p
+LEFT JOIN public.user_roles r ON r.user_id = p.id
+WHERE r.user_id IS NULL
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- Backfill (c): lifecycle_status for onboarded/invited clients.
+UPDATE public.profiles
+   SET lifecycle_status = 'Active'::public.client_lifecycle_status
+ WHERE activated_at IS NOT NULL
+   AND (lifecycle_status IS NULL OR lifecycle_status = 'New enquiry');
+
+UPDATE public.profiles
+   SET lifecycle_status = 'Invited'::public.client_lifecycle_status
+ WHERE activated_at IS NULL
+   AND must_change_password = true
+   AND (lifecycle_status IS NULL OR lifecycle_status = 'New enquiry');
+```
+
+After running, reload `/advocate/clients` — converted/onboarded testers will appear.
+
 ```sql
 -- =====================================================================
 -- Repair + link: backfill user_roles, add message_attachments,
