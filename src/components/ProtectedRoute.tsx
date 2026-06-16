@@ -14,6 +14,7 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   const location = useLocation();
   const [mfaState, setMfaState] = useState<"checking" | "ok" | "needs">("checking");
   const [pwdCheck, setPwdCheck] = useState<"checking" | "ok" | "needs">("checking");
+  const [onboardingCheck, setOnboardingCheck] = useState<"checking" | "ok" | "needs">("checking");
 
   useEffect(() => {
     if (!user) { setMfaState("ok"); return; }
@@ -35,21 +36,22 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   }, [user]);
 
   useEffect(() => {
-    if (!user) { setPwdCheck("ok"); return; }
+    if (!user) { setPwdCheck("ok"); setOnboardingCheck("ok"); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("must_change_password")
+      const { data } = await (supabase
+        .from("profiles") as any)
+        .select("must_change_password, onboarding_completed_at")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       setPwdCheck(data?.must_change_password ? "needs" : "ok");
+      setOnboardingCheck(data?.onboarding_completed_at ? "ok" : "needs");
     })();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, location.pathname]);
 
-  if (loading || mfaState === "checking" || pwdCheck === "checking") {
+  if (loading || mfaState === "checking" || pwdCheck === "checking" || onboardingCheck === "checking") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-sky">
         <div className="text-muted-foreground">Loading your space…</div>
@@ -65,6 +67,18 @@ export function ProtectedRoute({ children, requireRole }: Props) {
 
   if (requireRole && role !== requireRole) {
     return <Navigate to={role === "advocate" ? "/advocate" : "/client"} replace />;
+  }
+
+  // Gate clients who haven't finished onboarding. Allow the onboarding route
+  // itself (and its sub-steps like /client/navigation-intake) through.
+  if (
+    requireRole === "client" &&
+    onboardingCheck === "needs" &&
+    !location.pathname.startsWith("/client/onboarding") &&
+    !location.pathname.startsWith("/client/navigation-intake") &&
+    !location.pathname.startsWith("/client/agreements")
+  ) {
+    return <Navigate to="/client/onboarding" replace />;
   }
 
   return <>{children}</>;
