@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
-import { Calendar, CalendarClock, FileText, Heart, Home, LayoutDashboard, ListChecks, LogOut, MessageCircle, MoreHorizontal, Settings, Users, Wallet, Waves, FileStack } from "lucide-react";
+import { Calendar, CalendarClock, ClipboardList, FileText, Heart, Home, LayoutDashboard, ListChecks, LogOut, MessageCircle, MoreHorizontal, Settings, ShieldCheck, Users, Wallet, Waves, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BrainDumpCloud } from "./BrainDumpCloud";
