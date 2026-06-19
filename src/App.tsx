@@ -37,6 +37,7 @@ import CodeOfConduct from "./pages/CodeOfConduct";
 import ClientOnboarding from "./pages/ClientOnboarding";
 import ClientAgreements from "./pages/ClientAgreements";
 import ClientNavigationIntake from "./pages/ClientNavigationIntake";
+import ClientIntakeForm from "./pages/ClientIntakeForm";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
