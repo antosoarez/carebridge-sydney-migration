@@ -31,6 +31,7 @@ import { UrgencyBadge } from "@/components/ocean/UrgencyBadge";
 import { ClientCasesPanel } from "@/components/ocean/ClientCasesPanel";
 import { ClientCrmSummary } from "@/components/ocean/ClientCrmSummary";
 import { NavigationIntakeTab } from "@/components/ocean/NavigationIntakeTab";
+import { ClientIntakeTab } from "@/components/ocean/ClientIntakeTab";
 import { AgreementStatusList } from "@/components/ocean/AgreementStatusList";
 
 function countdownLabel(toDate: string | null): string | null {
