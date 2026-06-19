@@ -353,6 +353,17 @@ export default function ClientOnboarding() {
               >
                 {submitting ? "…" : t.s6_cta}
               </Button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await finish();
+                  navigate("/client/intake-form", { replace: true });
+                }}
+                disabled={submitting}
+                className="text-sm text-primary-deep underline underline-offset-4 hover:text-primary"
+              >
+                Or jump straight to your full intake form →
+              </button>
             </section>
           )}
 

@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
-import { Calendar, CalendarClock, FileText, Heart, Home, LayoutDashboard, ListChecks, LogOut, MessageCircle, MoreHorizontal, Settings, Users, Wallet, Waves, FileStack } from "lucide-react";
+import { Calendar, CalendarClock, ClipboardList, FileText, Heart, Home, LayoutDashboard, ListChecks, LogOut, MessageCircle, MoreHorizontal, Settings, ShieldCheck, Users, Wallet, Waves, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BrainDumpCloud } from "./BrainDumpCloud";
@@ -50,6 +50,8 @@ const clientNav: NavItem[] = [
   { to: "/client/brain-dump", label: "Brain Dump", icon: Waves },
   { to: "/client/calendar", label: "Calendar", icon: Calendar },
   { to: "/client/documents", label: "Documents", icon: FileText },
+  { to: "/client/intake-form", label: "Intake form", icon: ClipboardList },
+  { to: "/client/agreements", label: "Policies & Agreements", icon: ShieldCheck },
   { to: "/client/settings", label: "Settings", icon: Settings },
 ];
 
