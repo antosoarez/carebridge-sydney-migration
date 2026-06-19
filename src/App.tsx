@@ -102,6 +102,7 @@ const App = () => (
             <Route path="/client/onboarding" element={<C><ClientOnboarding /></C>} />
             <Route path="/client/agreements" element={<C><ClientAgreements /></C>} />
             <Route path="/client/navigation-intake" element={<C><ClientNavigationIntake /></C>} />
+            <Route path="/client/intake-form" element={<C><ClientIntakeForm /></C>} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/reset-password" element={<ResetPassword />} />
