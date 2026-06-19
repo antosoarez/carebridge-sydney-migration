@@ -50,6 +50,8 @@ const clientNav: NavItem[] = [
   { to: "/client/brain-dump", label: "Brain Dump", icon: Waves },
   { to: "/client/calendar", label: "Calendar", icon: Calendar },
   { to: "/client/documents", label: "Documents", icon: FileText },
+  { to: "/client/intake-form", label: "Intake form", icon: ClipboardList },
+  { to: "/client/agreements", label: "Policies & Agreements", icon: ShieldCheck },
   { to: "/client/settings", label: "Settings", icon: Settings },
 ];
 
