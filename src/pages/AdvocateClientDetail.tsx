@@ -398,6 +398,7 @@ export default function AdvocateClientDetail() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <NavigationIntakeTab clientId={client.id} />
+          <ClientIntakeTab clientId={client.id} />
           <AgreementStatusList clientId={client.id} />
           <EmotionWaveCard clientId={client.id} viewerRole="advocate" />
           <LowMoodFlagChip clientId={client.id} />
