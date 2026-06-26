@@ -204,6 +204,54 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_outbox: {
+        Row: {
+          attempts: number
+          channels: string[]
+          client_id: string | null
+          created_at: string
+          dedup_key: string | null
+          id: string
+          last_error: string | null
+          sent_at: string | null
+          status: string
+          template: string
+          to_role: string
+          to_user_id: string
+          vars: Json
+        }
+        Insert: {
+          attempts?: number
+          channels?: string[]
+          client_id?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          id?: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          template: string
+          to_role: string
+          to_user_id: string
+          vars?: Json
+        }
+        Update: {
+          attempts?: number
+          channels?: string[]
+          client_id?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          id?: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          template?: string
+          to_role?: string
+          to_user_id?: string
+          vars?: Json
+        }
+        Relationships: []
+      }
       automation_rule_actions: {
         Row: {
           action_config: Json
@@ -688,6 +736,120 @@ export type Database = {
         }
         Relationships: []
       }
+      client_intake: {
+        Row: {
+          allergies: string | null
+          client_id: string
+          concerns_onset: string | null
+          created_at: string
+          current_medications: string | null
+          date_of_birth: string | null
+          diagnosed_conditions: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
+          full_name: string | null
+          gender: string | null
+          gp_clinic: string | null
+          gp_email: string | null
+          gp_name: string | null
+          gp_phone: string | null
+          help_needed: string | null
+          main_concerns: string | null
+          main_outcome: string | null
+          mobile_phone: string | null
+          other_info: string | null
+          postcode: string | null
+          preferred_contact_method: string | null
+          preferred_name: string | null
+          pronouns: string | null
+          recent_investigations: string | null
+          referral_source: string | null
+          residential_address: string | null
+          services_interested: string[]
+          specialists: string | null
+          state: string | null
+          submitted_at: string | null
+          suburb: string | null
+          updated_at: string
+        }
+        Insert: {
+          allergies?: string | null
+          client_id: string
+          concerns_onset?: string | null
+          created_at?: string
+          current_medications?: string | null
+          date_of_birth?: string | null
+          diagnosed_conditions?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          full_name?: string | null
+          gender?: string | null
+          gp_clinic?: string | null
+          gp_email?: string | null
+          gp_name?: string | null
+          gp_phone?: string | null
+          help_needed?: string | null
+          main_concerns?: string | null
+          main_outcome?: string | null
+          mobile_phone?: string | null
+          other_info?: string | null
+          postcode?: string | null
+          preferred_contact_method?: string | null
+          preferred_name?: string | null
+          pronouns?: string | null
+          recent_investigations?: string | null
+          referral_source?: string | null
+          residential_address?: string | null
+          services_interested?: string[]
+          specialists?: string | null
+          state?: string | null
+          submitted_at?: string | null
+          suburb?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allergies?: string | null
+          client_id?: string
+          concerns_onset?: string | null
+          created_at?: string
+          current_medications?: string | null
+          date_of_birth?: string | null
+          diagnosed_conditions?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          full_name?: string | null
+          gender?: string | null
+          gp_clinic?: string | null
+          gp_email?: string | null
+          gp_name?: string | null
+          gp_phone?: string | null
+          help_needed?: string | null
+          main_concerns?: string | null
+          main_outcome?: string | null
+          mobile_phone?: string | null
+          other_info?: string | null
+          postcode?: string | null
+          preferred_contact_method?: string | null
+          preferred_name?: string | null
+          pronouns?: string | null
+          recent_investigations?: string | null
+          referral_source?: string | null
+          residential_address?: string | null
+          services_interested?: string[]
+          specialists?: string | null
+          state?: string | null
+          submitted_at?: string | null
+          suburb?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_internal_notes: {
         Row: {
           body: string
@@ -990,6 +1152,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          category: string | null
           client_id: string
           created_at: string
           id: string
@@ -1004,6 +1167,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["document_visibility"]
         }
         Insert: {
+          category?: string | null
           client_id: string
           created_at?: string
           id?: string
@@ -1018,6 +1182,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["document_visibility"]
         }
         Update: {
+          category?: string | null
           client_id?: string
           created_at?: string
           id?: string
@@ -1205,6 +1370,10 @@ export type Database = {
           email: string
           enquiry_status: string
           id: string
+          intake_q1: string | null
+          intake_q2: string | null
+          intake_q3_steps: Json | null
+          intake_q4: string | null
           internal_notes: string | null
           ip_address: string | null
           last_contacted_at: string | null
@@ -1229,6 +1398,10 @@ export type Database = {
           email: string
           enquiry_status?: string
           id?: string
+          intake_q1?: string | null
+          intake_q2?: string | null
+          intake_q3_steps?: Json | null
+          intake_q4?: string | null
           internal_notes?: string | null
           ip_address?: string | null
           last_contacted_at?: string | null
@@ -1253,6 +1426,10 @@ export type Database = {
           email?: string
           enquiry_status?: string
           id?: string
+          intake_q1?: string | null
+          intake_q2?: string | null
+          intake_q3_steps?: Json | null
+          intake_q4?: string | null
           internal_notes?: string | null
           ip_address?: string | null
           last_contacted_at?: string | null
@@ -2049,6 +2226,7 @@ export type Database = {
         Args: { _client_id: string }
         Returns: boolean
       }
+      client_uploads_done: { Args: never; Returns: undefined }
       count_my_active_recovery_codes: { Args: never; Returns: number }
       create_overdue_task_reminders: { Args: never; Returns: number }
       delete_email: {
@@ -2126,6 +2304,7 @@ export type Database = {
         }[]
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_client_invited: { Args: { _client_id: string }; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
       mark_thread_read: { Args: { _thread_id: string }; Returns: number }
       move_to_dlq: {

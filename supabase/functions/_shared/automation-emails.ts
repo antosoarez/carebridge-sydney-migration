@@ -100,6 +100,32 @@ const TEMPLATES: Record<string, Builder> = {
     };
   },
 
+  advocate_uploads_done: (ctx) => {
+    const who = ctx.clientName ? ` from ${ctx.clientName}` : "";
+    const link = `${CLIENT_URL}/advocate/documents`;
+    const branded = {
+      preheader: "A client has finished uploading their documents.",
+      heading: "Documents ready to review",
+      intro: greet(ctx.recipientName),
+      bodyParagraphs: [
+        `A client${who} has finished uploading their documents. Log in to review the file and begin the work.`,
+      ],
+      ctaLabel: "Review documents",
+      ctaUrl: link,
+      footnote: "For privacy, document contents are only shown in the portal.",
+      closing: "— CareBridge",
+    };
+    return {
+      subject: `Documents ready to review${who}`,
+      html: brandedEmailHtml(branded),
+      text: brandedEmailText(branded),
+      inappTitle: "Documents ready to review",
+      inappBody: `A client${who} has finished uploading their documents.`,
+      link,
+      inappKind: "documents",
+    };
+  },
+
   advocate_payment_received: (ctx) => {
     const who = ctx.clientName ? ` from ${ctx.clientName}` : "";
     const link = `${CLIENT_URL}/advocate`;

@@ -16,7 +16,6 @@ function playChime() {
     if (!AC) return;
     const ctx = new AC();
     const now = ctx.currentTime;
-    // soft two-note bell: E5 -> G5
     const notes = [659.25, 783.99];
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
@@ -35,7 +34,6 @@ function playChime() {
   } catch {/* silent */}
 }
 
-/* ---------- animated checkmark burst ---------- */
 function CheckBurst({ message }: { message: string }) {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/90 backdrop-blur-sm rounded-[2rem] animate-fade-in">
@@ -50,7 +48,6 @@ function CheckBurst({ message }: { message: string }) {
   );
 }
 
-/* ---------- progress dots ---------- */
 function Progress({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex items-center justify-center gap-2" aria-label={`Step ${step + 1} of ${total}`}>
@@ -66,7 +63,6 @@ function Progress({ step, total }: { step: number; total: number }) {
   );
 }
 
-/* ---------- step content ---------- */
 const HELP_OPTIONS = [
   { id: "navigate_appt", label: "Make sense of an upcoming appointment" },
   { id: "advocate_appt", label: "Have someone with me at an appointment" },
@@ -76,63 +72,89 @@ const HELP_OPTIONS = [
   { id: "other", label: "Something else" },
 ];
 
-const CHEERS = ["Lovely.", "Got it.", "Wonderful.", "All done!"];
+const CHEERS = ["Lovely.", "Got it.", "Thank you.", "Almost there.", "Wonderful.", "All done!"];
 
 interface FormState {
   name: string;
-  help: string[];
+  help: string[];          // Q1
+  whatsGoingOn: string;    // Q2
+  contactedGp: boolean;    // Q3
+  gotReferral: boolean;    // Q3
+  hasAppointment: boolean; // Q3
+  stepsNotes: string;      // Q3
+  mattersMost: string;     // Q4
   email: string;
   phone: string;
-  details: string;
 }
 
+const EMPTY: FormState = {
+  name: "", help: [], whatsGoingOn: "",
+  contactedGp: false, gotReferral: false, hasAppointment: false, stepsNotes: "",
+  mattersMost: "", email: "", phone: "",
+};
+
 export default function Intake() {
-  const [step, setStep] = useState(0); // 0..3 = questions, 4 = done
+  // steps: 0 name, 1 help(Q1), 2 whats-going-on(Q2), 3 steps(Q3), 4 matters-most(Q4), 5 contact; 6 = done
+  const TOTAL = 6;
+  const [step, setStep] = useState(0);
   const [showCheck, setShowCheck] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<FormState>({ name: "", help: [], email: "", phone: "", details: "" });
+  const [form, setForm] = useState<FormState>(EMPTY);
   const liveRef = useRef<HTMLDivElement>(null);
-
-  const TOTAL = 4;
 
   const canAdvance = useMemo(() => {
     if (step === 0) return form.name.trim().length >= 1;
     if (step === 1) return form.help.length >= 1;
-    if (step === 2) return /\S+@\S+\.\S+/.test(form.email);
-    return true;
+    if (step === 5) return /\S+@\S+\.\S+/.test(form.email);
+    return true; // Q2/Q3/Q4 are optional but encouraged
   }, [step, form]);
 
   const cheer = (i: number) => CHEERS[Math.min(i, CHEERS.length - 1)];
 
   const next = async () => {
     if (!canAdvance || submitting) return;
-    if (step === TOTAL - 1) {
-      await submit();
-      return;
-    }
+    if (step === TOTAL - 1) { await submit(); return; }
     setShowCheck(true);
     playChime();
     if (liveRef.current) liveRef.current.textContent = cheer(step);
-    setTimeout(() => {
-      setShowCheck(false);
-      setStep(s => s + 1);
-    }, 1100);
+    setTimeout(() => { setShowCheck(false); setStep(s => s + 1); }, 1000);
   };
 
   const back = () => setStep(s => Math.max(0, s - 1));
 
   const submit = async () => {
     setSubmitting(true);
-    const helpLabels = form.help.map(id => HELP_OPTIONS.find(h => h.id === id)?.label).filter(Boolean).join(", ");
+    const helpLabels = form.help
+      .map(id => HELP_OPTIONS.find(h => h.id === id)?.label)
+      .filter(Boolean)
+      .join(", ");
+    const stepsTaken = [
+      form.contactedGp && "Contacted GP",
+      form.gotReferral && "Got a referral",
+      form.hasAppointment && "Have an appointment booked",
+    ].filter(Boolean).join(", ");
+
     const message =
-      `What I'd like help with:\n${helpLabels}\n\n` +
-      (form.details.trim() ? `More from me:\n${form.details.trim()}` : "No extra notes — happy to chat.");
+      `What I'd like help with:\n${helpLabels || "—"}\n\n` +
+      `What's going on:\n${form.whatsGoingOn.trim() || "—"}\n\n` +
+      `Steps taken so far:\n${stepsTaken || "None yet"}${form.stepsNotes.trim() ? ` (${form.stepsNotes.trim()})` : ""}\n\n` +
+      `What matters most right now:\n${form.mattersMost.trim() || "—"}`;
+
     const { error } = await supabase.from("inbound_messages").insert({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim() || null,
       subject: "New intake from the welcome wizard",
       message,
+      intake_q1: helpLabels || null,
+      intake_q2: form.whatsGoingOn.trim() || null,
+      intake_q3_steps: {
+        contacted_gp: form.contactedGp,
+        got_referral: form.gotReferral,
+        has_appointment: form.hasAppointment,
+        notes: form.stepsNotes.trim() || null,
+      },
+      intake_q4: form.mattersMost.trim() || null,
     });
     setSubmitting(false);
     if (error) {
@@ -141,10 +163,9 @@ export default function Intake() {
     }
     playChime();
     if (liveRef.current) liveRef.current.textContent = "All done. Thank you for trusting us.";
-    setStep(TOTAL); // success screen
+    setStep(TOTAL);
   };
 
-  // keyboard: Enter to advance from inputs
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey && step < TOTAL && canAdvance) {
@@ -160,6 +181,8 @@ export default function Intake() {
   const toggleHelp = (id: string) => {
     setForm(f => ({ ...f, help: f.help.includes(id) ? f.help.filter(x => x !== id) : [...f.help, id] }));
   };
+
+  const firstName = form.name.split(" ")[0] || "there";
 
   return (
     <div className="min-h-screen bg-gradient-sky">
@@ -183,7 +206,7 @@ export default function Intake() {
             Let's take this one small step at a time.
           </h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            Four short questions. No pressure, no jargon. You can go back any time.
+            A few short questions. No pressure, no jargon. You can go back any time.
           </p>
         </div>
 
@@ -205,9 +228,7 @@ export default function Intake() {
                 <p className="text-muted-foreground mt-2 text-sm">Whatever feels right — first name, nickname, anything.</p>
               </div>
               <Input
-                id="name"
-                autoFocus
-                value={form.name}
+                id="name" autoFocus value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="Your preferred name"
                 className="h-14 text-lg rounded-2xl bg-secondary/40 border-0 px-5"
@@ -216,13 +237,13 @@ export default function Intake() {
             </div>
           )}
 
-          {/* Step 1 — help */}
+          {/* Step 1 — Q1: help with */}
           {step === 1 && (
             <div className="space-y-6 animate-fade-in">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Question 2 of {TOTAL}</p>
                 <p className="font-display text-2xl text-primary-deep">
-                  Hi {form.name.split(" ")[0] || "there"} — what do you need help with?
+                  Hi {firstName} — what would you like help with?
                 </p>
                 <p className="text-muted-foreground mt-2 text-sm">Pick anything that fits. You can choose more than one.</p>
               </div>
@@ -231,14 +252,10 @@ export default function Intake() {
                   const active = form.help.includes(opt.id);
                   return (
                     <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => toggleHelp(opt.id)}
-                      aria-pressed={active}
+                      key={opt.id} type="button" onClick={() => toggleHelp(opt.id)} aria-pressed={active}
                       className={`min-h-14 rounded-2xl px-5 py-4 text-left text-sm font-medium transition-calm border-2 ${
-                        active
-                          ? "border-primary bg-primary/10 text-primary-deep shadow-soft"
-                          : "border-transparent bg-secondary/40 hover:bg-secondary/70 text-foreground"
+                        active ? "border-primary bg-primary/10 text-primary-deep shadow-soft"
+                               : "border-transparent bg-secondary/40 hover:bg-secondary/70 text-foreground"
                       }`}
                     >
                       <span className="flex items-start gap-3">
@@ -256,11 +273,95 @@ export default function Intake() {
             </div>
           )}
 
-          {/* Step 2 — contact */}
+          {/* Step 2 — Q2: what's going on */}
           {step === 2 && (
             <div className="space-y-6 animate-fade-in">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Question 3 of {TOTAL}</p>
+                <Label htmlFor="whats-going-on" className="font-display text-2xl text-primary-deep">
+                  What's going on right now, in your own words?
+                </Label>
+                <p className="text-muted-foreground mt-2 text-sm">However you'd describe it. There's no wrong answer.</p>
+              </div>
+              <Textarea
+                id="whats-going-on" autoFocus value={form.whatsGoingOn}
+                onChange={e => setForm({ ...form, whatsGoingOn: e.target.value })}
+                placeholder="A few words about what's been happening..."
+                rows={6} className="text-base rounded-2xl bg-secondary/40 border-0 p-5 resize-none"
+              />
+            </div>
+          )}
+
+          {/* Step 3 — Q3: steps taken */}
+          {step === 3 && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Question 4 of {TOTAL}</p>
+                <p className="font-display text-2xl text-primary-deep">Have you already taken any steps?</p>
+                <p className="text-muted-foreground mt-2 text-sm">Tick anything you've done. It's completely fine if none apply.</p>
+              </div>
+              <div className="space-y-3">
+                {([
+                  ["contactedGp", "I've contacted my GP"],
+                  ["gotReferral", "I've got a referral"],
+                  ["hasAppointment", "I have an appointment booked"],
+                ] as const).map(([key, label]) => {
+                  const active = form[key] as boolean;
+                  return (
+                    <button
+                      key={key} type="button"
+                      onClick={() => setForm(f => ({ ...f, [key]: !f[key] }))}
+                      aria-pressed={active}
+                      className={`w-full min-h-14 rounded-2xl px-5 py-4 text-left text-sm font-medium transition-calm border-2 ${
+                        active ? "border-primary bg-primary/10 text-primary-deep shadow-soft"
+                               : "border-transparent bg-secondary/40 hover:bg-secondary/70 text-foreground"
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className={`h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 ${
+                          active ? "border-primary bg-primary" : "border-muted-foreground/40"
+                        }`}>
+                          {active && <Check className="h-3 w-3 text-primary-foreground stroke-[3]" />}
+                        </span>
+                        <span className="flex-1">{label}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+                <Textarea
+                  value={form.stepsNotes}
+                  onChange={e => setForm({ ...form, stepsNotes: e.target.value })}
+                  placeholder="Anything to add about the steps so far? (optional)"
+                  rows={3} className="text-base rounded-2xl bg-secondary/40 border-0 p-5 resize-none mt-2"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 4 — Q4: matters most */}
+          {step === 4 && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Question 5 of {TOTAL}</p>
+                <Label htmlFor="matters-most" className="font-display text-2xl text-primary-deep">
+                  What matters most to you right now?
+                </Label>
+                <p className="text-muted-foreground mt-2 text-sm">This helps us focus on what you really need.</p>
+              </div>
+              <Textarea
+                id="matters-most" autoFocus value={form.mattersMost}
+                onChange={e => setForm({ ...form, mattersMost: e.target.value })}
+                placeholder="The one thing that would help the most..."
+                rows={5} className="text-base rounded-2xl bg-secondary/40 border-0 p-5 resize-none"
+              />
+            </div>
+          )}
+
+          {/* Step 5 — contact */}
+          {step === 5 && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Last step — {TOTAL} of {TOTAL}</p>
                 <p className="font-display text-2xl text-primary-deep">How can we reach you?</p>
                 <p className="text-muted-foreground mt-2 text-sm">Email is enough. A phone number is only if you'd prefer a call back.</p>
               </div>
@@ -268,10 +369,7 @@ export default function Intake() {
                 <div>
                   <Label htmlFor="email" className="text-sm">Email</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    autoFocus
-                    value={form.email}
+                    id="email" type="email" autoFocus value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })}
                     placeholder="you@example.com"
                     className="h-14 text-base rounded-2xl bg-secondary/40 border-0 px-5 mt-1.5"
@@ -281,36 +379,13 @@ export default function Intake() {
                 <div>
                   <Label htmlFor="phone" className="text-sm">Phone <span className="text-muted-foreground">(optional)</span></Label>
                   <Input
-                    id="phone"
-                    type="tel"
-                    value={form.phone}
+                    id="phone" type="tel" value={form.phone}
                     onChange={e => setForm({ ...form, phone: e.target.value })}
                     placeholder="Only if you'd like a call"
                     className="h-14 text-base rounded-2xl bg-secondary/40 border-0 px-5 mt-1.5"
                   />
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Step 3 — anything else */}
-          {step === 3 && (
-            <div className="space-y-6 animate-fade-in">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Last question — {TOTAL} of {TOTAL}</p>
-                <Label htmlFor="details" className="font-display text-2xl text-primary-deep">
-                  Anything else you'd like us to know?
-                </Label>
-                <p className="text-muted-foreground mt-2 text-sm">Totally optional. Skip if you'd rather chat in person.</p>
-              </div>
-              <Textarea
-                id="details"
-                value={form.details}
-                onChange={e => setForm({ ...form, details: e.target.value })}
-                placeholder="A few words, a paragraph, or nothing at all..."
-                rows={6}
-                className="text-base rounded-2xl bg-secondary/40 border-0 p-5 resize-none"
-              />
             </div>
           )}
 
@@ -323,7 +398,7 @@ export default function Intake() {
                   <Check className="h-12 w-12 text-success-foreground stroke-[3]" />
                 </div>
               </div>
-              <h2 className="font-display text-3xl text-primary-deep">All done — thank you, {form.name.split(" ")[0] || "friend"}.</h2>
+              <h2 className="font-display text-3xl text-primary-deep">All done — thank you, {firstName}.</h2>
               <p className="text-muted-foreground mt-3 max-w-md mx-auto">
                 Your note is safely with us. A real human will write back to <span className="font-semibold text-foreground">{form.email}</span> within one working day.
               </p>
@@ -332,20 +407,16 @@ export default function Intake() {
           )}
         </div>
 
-        {/* Navigation */}
         {step < TOTAL && (
           <div className="flex items-center justify-between mt-6 gap-3">
             <Button
-              variant="ghost"
-              onClick={back}
-              disabled={step === 0 || submitting}
+              variant="ghost" onClick={back} disabled={step === 0 || submitting}
               className="min-h-14 rounded-2xl gap-2 px-5 text-muted-foreground hover:text-primary"
             >
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
             <Button
-              onClick={next}
-              disabled={!canAdvance || submitting}
+              onClick={next} disabled={!canAdvance || submitting}
               className="min-h-14 rounded-2xl px-7 gap-2 bg-gradient-ocean shadow-soft text-base"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
