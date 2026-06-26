@@ -18,6 +18,7 @@ import { MiniUpcomingAppointments } from "@/components/ocean/MiniUpcomingAppoint
 import { ClientEngagementBar } from "@/components/ocean/ClientEngagementBar";
 import { useOwnClientProgress } from "@/lib/client-progress";
 import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
+import { ManualPaymentOverride } from "@/components/ocean/ManualPaymentOverride";
 import { ClientAgreementsPanel } from "@/components/ocean/ClientAgreementsPanel";
 import { PaymentLinkField } from "@/components/ocean/PaymentLinkField";
 import { useAgreements } from "@/lib/agreements-store";
@@ -429,6 +430,8 @@ export default function AdvocateClientDetail() {
           <ClientAgreementsPanel clientId={client.id} asAdvocate />
 
           <ClientPaymentTracker clientId={client.id} clientName={client.name.split(" ")[0]} />
+
+          <ManualPaymentOverride clientId={client.id} clientName={client.name.split(" ")[0]} />
 
           <PaymentLinkSection clientId={client.id} />
 

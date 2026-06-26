@@ -1027,8 +1027,10 @@ export type Database = {
           invoice_given_at: string | null
           kind: Database["public"]["Enums"]["payment_kind"]
           label: string
+          notes: string | null
           paid: boolean
           paid_at: string | null
+          payment_method: string | null
           sort_order: number
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -1045,8 +1047,10 @@ export type Database = {
           invoice_given_at?: string | null
           kind?: Database["public"]["Enums"]["payment_kind"]
           label?: string
+          notes?: string | null
           paid?: boolean
           paid_at?: string | null
+          payment_method?: string | null
           sort_order?: number
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -1063,8 +1067,10 @@ export type Database = {
           invoice_given_at?: string | null
           kind?: Database["public"]["Enums"]["payment_kind"]
           label?: string
+          notes?: string | null
           paid?: boolean
           paid_at?: string | null
+          payment_method?: string | null
           sort_order?: number
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -1860,12 +1866,16 @@ export type Database = {
       profiles: {
         Row: {
           activated_at: string | null
+          agreements_completed_at: string | null
           client_colour: string
           client_progress: number
+          consultation_booked_at: string | null
           created_at: string
           email: string
           full_name: string | null
+          gating_override: boolean
           id: string
+          intake_completed_at: string | null
           last_urgency_calculated_at: string | null
           lifecycle_status:
             | Database["public"]["Enums"]["client_lifecycle_status"]
@@ -1875,6 +1885,7 @@ export type Database = {
           must_change_password: boolean
           navigation_intake_seen_at: string | null
           onboarding_completed_at: string | null
+          payment_completed_at: string | null
           payment_gate_unlocked_at: string | null
           payment_status: Database["public"]["Enums"]["client_payment_status"]
           phone: string | null
@@ -1889,12 +1900,16 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          agreements_completed_at?: string | null
           client_colour?: string
           client_progress?: number
+          consultation_booked_at?: string | null
           created_at?: string
           email: string
           full_name?: string | null
+          gating_override?: boolean
           id: string
+          intake_completed_at?: string | null
           last_urgency_calculated_at?: string | null
           lifecycle_status?:
             | Database["public"]["Enums"]["client_lifecycle_status"]
@@ -1904,6 +1919,7 @@ export type Database = {
           must_change_password?: boolean
           navigation_intake_seen_at?: string | null
           onboarding_completed_at?: string | null
+          payment_completed_at?: string | null
           payment_gate_unlocked_at?: string | null
           payment_status?: Database["public"]["Enums"]["client_payment_status"]
           phone?: string | null
@@ -1918,12 +1934,16 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          agreements_completed_at?: string | null
           client_colour?: string
           client_progress?: number
+          consultation_booked_at?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
+          gating_override?: boolean
           id?: string
+          intake_completed_at?: string | null
           last_urgency_calculated_at?: string | null
           lifecycle_status?:
             | Database["public"]["Enums"]["client_lifecycle_status"]
@@ -1933,6 +1953,7 @@ export type Database = {
           must_change_password?: boolean
           navigation_intake_seen_at?: string | null
           onboarding_completed_at?: string | null
+          payment_completed_at?: string | null
           payment_gate_unlocked_at?: string | null
           payment_status?: Database["public"]["Enums"]["client_payment_status"]
           phone?: string | null
@@ -2431,6 +2452,15 @@ export type Database = {
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_client_invited: { Args: { _client_id: string }; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      mark_paid_manually: {
+        Args: {
+          _amount?: number
+          _client_id: string
+          _method: string
+          _notes: string
+        }
+        Returns: undefined
+      }
       mark_thread_read: { Args: { _thread_id: string }; Returns: number }
       member_engagement_check: { Args: never; Returns: number }
       move_to_dlq: {

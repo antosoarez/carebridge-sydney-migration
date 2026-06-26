@@ -39,6 +39,8 @@ import ClientAgreements from "./pages/ClientAgreements";
 import ClientNavigationIntake from "./pages/ClientNavigationIntake";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import BookAppointment from "./pages/BookAppointment";
+import ClientPayment from "./pages/ClientPayment";
+import ClientSupport from "./pages/ClientSupport";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -106,6 +108,8 @@ const App = () => (
             <Route path="/client/intake-form" element={<C><ClientIntakeForm /></C>} />
             <Route path="/book-appointment" element={<C><BookAppointment mode="consultation" /></C>} />
             <Route path="/client/book-followup" element={<C><BookAppointment mode="followup" /></C>} />
+            <Route path="/client/payment" element={<C><ClientPayment /></C>} />
+            <Route path="/client/support" element={<C><ClientSupport /></C>} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/reset-password" element={<ResetPassword />} />
