@@ -65,8 +65,12 @@ Deno.serve(async (req) => {
     const newUserId = linkData?.user?.id ?? null;
     if (!actionLink) return json({ error: "Could not generate invite link" }, 500);
 
-    if (newUserId && phone) {
-      await admin.from("profiles").update({ phone }).eq("id", newUserId);
+    if (newUserId) {
+      // Invited (advocate-created) client: set lifecycle to 'Invited' so the
+      // enquiry_created automation does not fire for the default 'New enquiry'.
+      const profileUpdate: Record<string, unknown> = { lifecycle_status: "Invited" };
+      if (phone) profileUpdate.phone = phone;
+      await admin.from("profiles").update(profileUpdate).eq("id", newUserId);
     }
 
     await sendViaResend({

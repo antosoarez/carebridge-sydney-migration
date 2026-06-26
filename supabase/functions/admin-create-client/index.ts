@@ -95,6 +95,9 @@ Deno.serve(async (req) => {
           full_name: fullName,
           must_change_password: method === "direct",
           activated_at: null,
+          // Advocate-created/converted client: skip the 'New enquiry' default so
+          // the enquiry_created automation does not fire for invited clients.
+          lifecycle_status: "Invited",
         })
         .eq("id", dup.id);
 
@@ -137,6 +140,9 @@ Deno.serve(async (req) => {
           full_name: fullName,
           must_change_password: method === "direct",
           activated_at: null,
+          // Advocate-created/converted client: skip the 'New enquiry' default so
+          // the enquiry_created automation does not fire for invited clients.
+          lifecycle_status: "Invited",
         })
         .eq("id", newUserId);
     }
