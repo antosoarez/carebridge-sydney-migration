@@ -95,11 +95,12 @@ Deno.serve(async (req) => {
           full_name: fullName,
           must_change_password: method === "direct",
           activated_at: null,
-          // Advocate-created/converted client: skip the 'New enquiry' default so
-          // the enquiry_created automation does not fire for invited clients.
-          lifecycle_status: "Invited",
         })
         .eq("id", dup.id);
+      // Advocate-created/converted client: flip the 'New enquiry' default to
+      // 'Invited' (via SECURITY DEFINER RPC, since the guard blocks service_role
+      // writes to lifecycle_status) so enquiry_created automation doesn't fire.
+      await admin.rpc("mark_client_invited", { _client_id: dup.id });
 
       if (method === "invite") {
         // Re-send invite link
@@ -140,11 +141,12 @@ Deno.serve(async (req) => {
           full_name: fullName,
           must_change_password: method === "direct",
           activated_at: null,
-          // Advocate-created/converted client: skip the 'New enquiry' default so
-          // the enquiry_created automation does not fire for invited clients.
-          lifecycle_status: "Invited",
         })
         .eq("id", newUserId);
+      // Advocate-created/converted client: flip the 'New enquiry' default to
+      // 'Invited' (via SECURITY DEFINER RPC, since the guard blocks service_role
+      // writes to lifecycle_status) so enquiry_created automation doesn't fire.
+      await admin.rpc("mark_client_invited", { _client_id: newUserId });
     }
 
     return json({ ok: true, user_id: newUserId, method });
