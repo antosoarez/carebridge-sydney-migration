@@ -7,13 +7,72 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      agreement_documents: {
+        Row: {
+          active: boolean
+          body_md: string
+          created_at: string
+          id: string
+          required: boolean
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          body_md: string
+          created_at?: string
+          id?: string
+          required?: boolean
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          body_md?: string
+          created_at?: string
+          id?: string
+          required?: boolean
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       appointment_notification_log: {
         Row: {
           appointment_id: string
@@ -145,6 +204,121 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_rule_actions: {
+        Row: {
+          action_config: Json
+          action_kind: string
+          id: string
+          rule_id: string
+          sort_order: number
+        }
+        Insert: {
+          action_config?: Json
+          action_kind: string
+          id?: string
+          rule_id: string
+          sort_order?: number
+        }
+        Update: {
+          action_config?: Json
+          action_kind?: string
+          id?: string
+          rule_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rule_actions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          priority: number
+          slug: string
+          trigger_config: Json
+          trigger_kind: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          priority?: number
+          slug: string
+          trigger_config?: Json
+          trigger_kind: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          priority?: number
+          slug?: string
+          trigger_config?: Json
+          trigger_kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      automation_runs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          detail: Json
+          event_key: string | null
+          event_kind: string
+          id: string
+          rule_id: string | null
+          rule_slug: string
+          status: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_key?: string | null
+          event_kind: string
+          id?: string
+          rule_id?: string | null
+          rule_slug: string
+          status?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_key?: string | null
+          event_kind?: string
+          id?: string
+          rule_id?: string | null
+          rule_slug?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_options: {
         Row: {
           availability_request_id: string
@@ -266,6 +440,63 @@ export type Database = {
           urgency?: string
         }
         Relationships: []
+      }
+      client_agreement_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by_user_id: string | null
+          client_id: string
+          document_id: string
+          document_slug: string
+          document_version: number
+          id: string
+          ip: string | null
+          method: string
+          notes: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by_user_id?: string | null
+          client_id: string
+          document_id: string
+          document_slug: string
+          document_version: number
+          id?: string
+          ip?: string | null
+          method?: string
+          notes?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by_user_id?: string | null
+          client_id?: string
+          document_id?: string
+          document_slug?: string
+          document_version?: number
+          id?: string
+          ip?: string | null
+          method?: string
+          notes?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_agreement_acceptances_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_agreement_acceptances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_availability_preferences: {
         Row: {
@@ -394,10 +625,41 @@ export type Database = {
           },
         ]
       }
+      client_consents: {
+        Row: {
+          accepted_at: string
+          consent_text: string
+          id: string
+          kind: string
+          lang: string
+          language: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          consent_text: string
+          id?: string
+          kind: string
+          lang?: string
+          language?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          consent_text?: string
+          id?: string
+          kind?: string
+          lang?: string
+          language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_fee_arrangements: {
         Row: {
           client_id: string
           created_at: string
+          external_payment_link_url: string | null
           model: Database["public"]["Enums"]["fee_model"]
           notes: string
           total_amount: number
@@ -407,6 +669,7 @@ export type Database = {
         Insert: {
           client_id: string
           created_at?: string
+          external_payment_link_url?: string | null
           model?: Database["public"]["Enums"]["fee_model"]
           notes?: string
           total_amount?: number
@@ -416,6 +679,7 @@ export type Database = {
         Update: {
           client_id?: string
           created_at?: string
+          external_payment_link_url?: string | null
           model?: Database["public"]["Enums"]["fee_model"]
           notes?: string
           total_amount?: number
@@ -444,6 +708,115 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      client_lifecycle_events: {
+        Row: {
+          actor_id: string | null
+          client_id: string
+          created_at: string
+          id: string
+          new_status:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          old_status:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          reason: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          new_status?:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          old_status?:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          new_status?:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          old_status?:
+            | Database["public"]["Enums"]["client_lifecycle_status"]
+            | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_lifecycle_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_navigation_intake: {
+        Row: {
+          case_id: string | null
+          client_id: string
+          created_at: string
+          help_with: string | null
+          id: string
+          language: string
+          matters_most: string | null
+          source: string
+          step_appointment_booked: boolean
+          step_contacted_gp: boolean
+          step_got_referral: boolean
+          steps_notes: string | null
+          updated_at: string
+          whats_going_on: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          client_id: string
+          created_at?: string
+          help_with?: string | null
+          id?: string
+          language?: string
+          matters_most?: string | null
+          source?: string
+          step_appointment_booked?: boolean
+          step_contacted_gp?: boolean
+          step_got_referral?: boolean
+          steps_notes?: string | null
+          updated_at?: string
+          whats_going_on?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          client_id?: string
+          created_at?: string
+          help_with?: string | null
+          id?: string
+          language?: string
+          matters_most?: string | null
+          source?: string
+          step_appointment_booked?: boolean
+          step_contacted_gp?: boolean
+          step_got_referral?: boolean
+          steps_notes?: string | null
+          updated_at?: string
+          whats_going_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_navigation_intake_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "client_cases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_payments: {
         Row: {
@@ -905,6 +1278,57 @@ export type Database = {
           },
         ]
       }
+      message_attachments: {
+        Row: {
+          content_type: string
+          created_at: string
+          filename: string
+          id: string
+          message_id: string
+          size_bytes: number
+          storage_path: string
+          thread_id: string
+          uploader_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          filename: string
+          id?: string
+          message_id: string
+          size_bytes: number
+          storage_path: string
+          thread_id: string
+          uploader_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          message_id?: string
+          size_bytes?: number
+          storage_path?: string
+          thread_id?: string
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "message_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_notification_log: {
         Row: {
           email_number: number
@@ -1188,10 +1612,17 @@ export type Database = {
           lifecycle_status:
             | Database["public"]["Enums"]["client_lifecycle_status"]
             | null
+          lifecycle_status_changed_at: string | null
           messages_banner_dismissed_at: string | null
           must_change_password: boolean
+          navigation_intake_seen_at: string | null
+          onboarding_completed_at: string | null
+          payment_gate_unlocked_at: string | null
           payment_status: Database["public"]["Enums"]["client_payment_status"]
           phone: string | null
+          preferred_contact_method: string | null
+          preferred_language: string | null
+          preferred_name: string | null
           report_status: Database["public"]["Enums"]["client_report_status"]
           tier: Database["public"]["Enums"]["client_tier"]
           updated_at: string
@@ -1210,10 +1641,17 @@ export type Database = {
           lifecycle_status?:
             | Database["public"]["Enums"]["client_lifecycle_status"]
             | null
+          lifecycle_status_changed_at?: string | null
           messages_banner_dismissed_at?: string | null
           must_change_password?: boolean
+          navigation_intake_seen_at?: string | null
+          onboarding_completed_at?: string | null
+          payment_gate_unlocked_at?: string | null
           payment_status?: Database["public"]["Enums"]["client_payment_status"]
           phone?: string | null
+          preferred_contact_method?: string | null
+          preferred_language?: string | null
+          preferred_name?: string | null
           report_status?: Database["public"]["Enums"]["client_report_status"]
           tier?: Database["public"]["Enums"]["client_tier"]
           updated_at?: string
@@ -1232,10 +1670,17 @@ export type Database = {
           lifecycle_status?:
             | Database["public"]["Enums"]["client_lifecycle_status"]
             | null
+          lifecycle_status_changed_at?: string | null
           messages_banner_dismissed_at?: string | null
           must_change_password?: boolean
+          navigation_intake_seen_at?: string | null
+          onboarding_completed_at?: string | null
+          payment_gate_unlocked_at?: string | null
           payment_status?: Database["public"]["Enums"]["client_payment_status"]
           phone?: string | null
+          preferred_contact_method?: string | null
+          preferred_language?: string | null
+          preferred_name?: string | null
           report_status?: Database["public"]["Enums"]["client_report_status"]
           tier?: Database["public"]["Enums"]["client_tier"]
           updated_at?: string
@@ -1600,6 +2045,10 @@ export type Database = {
           signals: Json
         }[]
       }
+      client_has_all_required_agreements: {
+        Args: { _client_id: string }
+        Returns: boolean
+      }
       count_my_active_recovery_codes: { Args: never; Returns: number }
       create_overdue_task_reminders: { Args: never; Returns: number }
       delete_email: {
@@ -1710,6 +2159,16 @@ export type Database = {
         Args: { _report_id: string }
         Returns: undefined
       }
+      run_automations: {
+        Args: {
+          _client_id: string
+          _event_key: string
+          _event_kind: string
+          _payload?: Json
+        }
+        Returns: undefined
+      }
+      scan_stage_timeouts: { Args: never; Returns: undefined }
       send_back_report: {
         Args: { _note: string; _report_id: string }
         Returns: undefined
@@ -1724,6 +2183,10 @@ export type Database = {
       }
       share_report_for_review: {
         Args: { _report_id: string }
+        Returns: undefined
+      }
+      upsert_my_push_subscription: {
+        Args: { _endpoint: string; _keys: Json; _user_agent?: string }
         Returns: undefined
       }
     }
@@ -1745,6 +2208,11 @@ export type Database = {
         | "Completed"
         | "Ongoing support"
         | "Inactive"
+        | "Booked"
+        | "Awaiting agreements"
+        | "Awaiting payment"
+        | "Work in progress"
+        | "Report delivered"
       client_payment_status: "unpaid" | "half_paid" | "full_paid"
       client_report_status:
         | "not_started"
@@ -1888,6 +2356,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["advocate", "client"],
@@ -1907,6 +2378,11 @@ export const Constants = {
         "Completed",
         "Ongoing support",
         "Inactive",
+        "Booked",
+        "Awaiting agreements",
+        "Awaiting payment",
+        "Work in progress",
+        "Report delivered",
       ],
       client_payment_status: ["unpaid", "half_paid", "full_paid"],
       client_report_status: [
@@ -1930,3 +2406,4 @@ export const Constants = {
     },
   },
 } as const
+
