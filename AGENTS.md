@@ -48,3 +48,15 @@ networking fails). Required secrets: `SUPABASE_DB_PASSWORD` (or a full `SUPABASE
   `mark_client_invited`) rather than writing the column directly.
 
 Running the full local stack (`supabase start`) needs Docker and is **not** required for frontend dev.
+
+### Automation engine & notification bridge
+- Lifecycle automations run through `run_automations()` (SECURITY DEFINER, service_role-only),
+  driven by triggers on profiles/appointments/agreements/payments/documents and seeded
+  `automation_rules`/`automation_rule_actions`. Inspect runs in `automation_runs`.
+- Notifications: the `notify` action enqueues client-safe rows into `automation_outbox` (no PHI).
+  The `dispatch-automation-outbox` edge function drains it (Resend email + in-app) and is triggered
+  every minute by the `dispatch-automation-outbox` pg_cron job. Auth is a shared token that must match
+  in two places: the function secret `OUTBOX_DISPATCH_TOKEN` and the Vault secret `outbox_dispatch_token`
+  (the cron reads the Vault value). If you rotate it, update both.
+- Note: the older Lovable HTTP crons (e.g. `queue-appointment-reminders`) still point at the dead Seoul
+  URL with a missing vault secret, so they are no-ops; reminder delivery there needs re-pointing if revived.
