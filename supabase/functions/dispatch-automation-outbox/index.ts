@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
     .select("*")
     .eq("status", "pending")
     .lt("attempts", MAX_ATTEMPTS)
+    .lte("not_before", new Date().toISOString())
     .order("created_at", { ascending: true })
     .limit(BATCH);
 
