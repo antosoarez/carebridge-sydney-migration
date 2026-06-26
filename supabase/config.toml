@@ -1,6 +1,8 @@
 project_id = "dkfjmtysfuqtdpaqpxsd"
 
 [functions]
+  [functions.dispatch-automation-outbox]
+    verify_jwt = false
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.handle-email-suppression]
