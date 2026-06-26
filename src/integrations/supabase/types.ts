@@ -985,6 +985,7 @@ export type Database = {
           amount: number
           client_id: string
           created_at: string
+          currency: string
           id: string
           invoice_given: boolean
           invoice_given_at: string | null
@@ -993,6 +994,8 @@ export type Database = {
           paid: boolean
           paid_at: string | null
           sort_order: number
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1000,6 +1003,7 @@ export type Database = {
           amount?: number
           client_id: string
           created_at?: string
+          currency?: string
           id?: string
           invoice_given?: boolean
           invoice_given_at?: string | null
@@ -1008,6 +1012,8 @@ export type Database = {
           paid?: boolean
           paid_at?: string | null
           sort_order?: number
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1015,6 +1021,7 @@ export type Database = {
           amount?: number
           client_id?: string
           created_at?: string
+          currency?: string
           id?: string
           invoice_given?: boolean
           invoice_given_at?: string | null
@@ -1023,6 +1030,8 @@ export type Database = {
           paid?: boolean
           paid_at?: string | null
           sort_order?: number
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1988,6 +1997,48 @@ export type Database = {
           title?: string
           updated_at?: string
           visibility?: Database["public"]["Enums"]["report_visibility"]
+        }
+        Relationships: []
+      }
+      service_tiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          delivery_days: number
+          description: string | null
+          id: string
+          name: string
+          price_aud: number
+          slug: string
+          sort_order: number
+          stripe_payment_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          delivery_days?: number
+          description?: string | null
+          id?: string
+          name: string
+          price_aud: number
+          slug: string
+          sort_order?: number
+          stripe_payment_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          delivery_days?: number
+          description?: string | null
+          id?: string
+          name?: string
+          price_aud?: number
+          slug?: string
+          sort_order?: number
+          stripe_payment_link?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
