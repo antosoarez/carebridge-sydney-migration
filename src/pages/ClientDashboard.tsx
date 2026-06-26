@@ -12,6 +12,7 @@ import { ClientEngagementBar } from "@/components/ocean/ClientEngagementBar";
 import { ClientReportsSection } from "@/components/ocean/ClientReportsSection";
 import { CareJourneyTimeline } from "@/components/ocean/CareJourneyTimeline";
 import { PaymentOutstandingNote } from "@/components/ocean/PaymentOutstandingNote";
+import { StripePaymentCta } from "@/components/ocean/StripePaymentCta";
 import { useOwnClientProgress } from "@/lib/client-progress";
 import { TodaysFocusCard } from "@/components/ocean/TodaysFocusCard";
 import { countPendingForClient } from "@/lib/client-availability-store";
@@ -55,6 +56,7 @@ export default function ClientDashboard() {
 
   return (
     <AppShell role="client" title={greeting} subtitle="Take it one calm step at a time.">
+      <StripePaymentCta />
       <PaymentOutstandingNote />
       {/* Today's focus — reads real to-dos for this user */}
       {user?.id && (
