@@ -26,6 +26,25 @@ publishable key are committed in `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUB
   running anything locally. A good smoke test is submitting the `/contact` form, which writes to the
   `inbound_messages` table and shows a "Message received" confirmation.
 - Authenticated advocate/client routes require real Supabase accounts; there are no seeded local creds.
-- `supabase/` (config.toml, 82 migrations, 28 Deno edge functions) targets a *different* project_id than `.env`.
-  Running the local Supabase stack (`supabase start`) is **optional** and requires the Supabase CLI + Docker;
-  it is not needed for frontend development against the hosted project.
+
+### Backend: Supabase migrations & edge-function deploys (canonical = Sydney)
+The single canonical project is **`dkfjmtysfuqtdpaqpxsd`** (Sydney, `ap-southeast-2`), matching `.env` and
+`supabase/config.toml`. The old Seoul project `umuvklhpppuchijbvsae` is **abandoned** — ignore it. Lovable no
+longer manages this project's schema; **Supabase CLI `db push` is the sole deploy authority**. Pre-cutover
+Lovable migrations are archived in `supabase/migrations_legacy/` (do not re-apply); the active
+`supabase/migrations/` starts from `..._baseline_remote_schema.sql` (the live schema, marked already-applied).
+
+Operating notes (this VM has **no Docker** and the kernel has **no `tun` module**, so rootless container
+networking fails). Required secrets: `SUPABASE_DB_PASSWORD` (or a full `SUPABASE_DB_URL`), `SERVICE_ROLE_KEY`
+(new-format `sb_secret_…`), and `SUPABASE_ACCESS_TOKEN` (`sbp_…`) for function deploys.
+- Server is **Postgres 17** — use a v17 `pg_dump`/`psql` (PGDG repo), not the distro's 16.
+- Connect via the **session pooler** `postgresql://postgres.dkfjmtysfuqtdpaqpxsd:<pw>@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres` (the direct `db.<ref>.supabase.co` host is IPv6-only and unreachable here).
+- Migrations: `supabase db push --db-url "$SUPABASE_DB_URL"` (and `--dry-run` first). `db pull`/`db dump` need Docker — avoid; use `pg_dump` directly for schema snapshots.
+- Edge functions: deploy with **`supabase functions deploy <name> --use-api`** (server-side bundling). Plain `functions deploy` tries a local podman build and fails on rootless netns here.
+- `supabase gen types typescript --db-url …` works only because `podman` is installed (it runs `postgres-meta` with `--network host`).
+- **Guard caveat:** `guard_profile_advocate_fields()` blocks `lifecycle_status`/tier/etc. writes unless the
+  actor is an advocate or the txn GUC `app.recomputing_progress='on'` is set. Service-role/system code that must
+  change these fields should go through a `SECURITY DEFINER` function that sets that GUC (e.g. `run_automations`,
+  `mark_client_invited`) rather than writing the column directly.
+
+Running the full local stack (`supabase start`) needs Docker and is **not** required for frontend dev.
