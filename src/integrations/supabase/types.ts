@@ -34,6 +34,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      advocate_availability: {
+        Row: {
+          active: boolean
+          advocate_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          active?: boolean
+          advocate_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          start_time: string
+        }
+        Update: {
+          active?: boolean
+          advocate_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: []
+      }
       agreement_documents: {
         Row: {
           active: boolean
@@ -119,6 +149,7 @@ export type Database = {
           provider_name: string | null
           starts_at: string
           title: string
+          video_link: string | null
           what_to_bring: string | null
         }
         Insert: {
@@ -139,6 +170,7 @@ export type Database = {
           provider_name?: string | null
           starts_at: string
           title: string
+          video_link?: string | null
           what_to_bring?: string | null
         }
         Update: {
@@ -159,6 +191,7 @@ export type Database = {
           provider_name?: string | null
           starts_at?: string
           title?: string
+          video_link?: string | null
           what_to_bring?: string | null
         }
         Relationships: [
@@ -213,6 +246,7 @@ export type Database = {
           dedup_key: string | null
           id: string
           last_error: string | null
+          not_before: string
           sent_at: string | null
           status: string
           template: string
@@ -228,6 +262,7 @@ export type Database = {
           dedup_key?: string | null
           id?: string
           last_error?: string | null
+          not_before?: string
           sent_at?: string | null
           status?: string
           template: string
@@ -243,6 +278,7 @@ export type Database = {
           dedup_key?: string | null
           id?: string
           last_error?: string | null
+          not_before?: string
           sent_at?: string | null
           status?: string
           template?: string
@@ -1539,6 +1575,42 @@ export type Database = {
         }
         Relationships: []
       }
+      message_templates: {
+        Row: {
+          active: boolean
+          auto_trigger: string | null
+          body_template: string
+          category: string | null
+          created_at: string
+          id: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          auto_trigger?: string | null
+          body_template: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          auto_trigger?: string | null
+          body_template?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       message_threads: {
         Row: {
           advocate_id: string
@@ -2261,6 +2333,7 @@ export type Database = {
       _primary_advocate_id: { Args: never; Returns: string }
       admin_delete_client: { Args: { _user_id: string }; Returns: undefined }
       agree_report: { Args: { _report_id: string }; Returns: undefined }
+      auto_complete_appointments: { Args: never; Returns: number }
       bump_client_progress: {
         Args: { _cap?: number; _client_id: string; _delta: number }
         Returns: number
@@ -2284,6 +2357,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      enqueue_appointment_reminders: { Args: never; Returns: number }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -2358,6 +2432,7 @@ export type Database = {
       mark_client_invited: { Args: { _client_id: string }; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
       mark_thread_read: { Args: { _thread_id: string }; Returns: number }
+      member_engagement_check: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
