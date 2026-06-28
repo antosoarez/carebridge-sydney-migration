@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, roleHomePath } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { SEO } from "@/components/SEO";
 import { EmergencyNotice } from "@/components/ocean/EmergencyNotice";
@@ -60,7 +60,7 @@ export default function Welcome() {
       try { await supabase.functions.invoke("mark-activated", { body: {} }); } catch { /* non-blocking */ }
       toast({ title: "Welcome aboard 🌊", description: "Your account is ready." });
       // Invited clients always get the 'client' role via handle_new_user trigger.
-      navigate(role === "advocate" ? "/advocate" : "/client/onboarding", { replace: true });
+      navigate(role === "client" ? "/client/onboarding" : roleHomePath(role), { replace: true });
     } catch (err: any) {
       toast({ title: "Couldn't set password", description: err.message, variant: "destructive" });
     } finally {

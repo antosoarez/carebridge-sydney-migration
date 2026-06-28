@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, roleHomePath } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { SEO } from "@/components/SEO";
@@ -15,7 +15,6 @@ import { verifyRecoveryCode } from "@/lib/recovery-codes";
 import { isCurrentDeviceTrusted, trustCurrentDevice, TRUST_DURATION_DAYS } from "@/lib/trusted-device";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const ADVOCATE_EMAIL = "hello@carebridgeperth.com";
 const SUPPORT_EMAIL = "hello@carebridgeperth.com";
 
 export default function Login() {
@@ -59,24 +58,27 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (!loading && user && role && !mfaFactorId) {
+    if (!loading && user && !mfaFactorId) {
+      if (!role) {
+        navigate("/account-pending", { replace: true });
+        return;
+      }
       // Only redirect if MFA isn't pending
       supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(async ({ data }) => {
+        const destination = roleHomePath(role);
         if (data?.nextLevel === "aal2" && data.currentLevel !== "aal2") {
-          // Trusted device? Skip the 6-digit prompt
           const trusted = await isCurrentDeviceTrusted();
           if (trusted) {
-            navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+            navigate(destination, { replace: true });
             return;
           }
-          // user has TOTP enrolled but hasn't satisfied it yet
           supabase.auth.mfa.listFactors().then(({ data: f }) => {
             const verified = f?.totp?.find((t) => t.status === "verified");
             if (verified) setMfaFactorId(verified.id);
-            else navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+            else navigate(destination, { replace: true });
           });
         } else {
-          navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+          navigate(destination, { replace: true });
         }
       });
     }
@@ -114,7 +116,7 @@ export default function Login() {
       toast({ title: "Verified ✓", description: trustDevice ? `Welcome back. We'll trust this device for ${TRUST_DURATION_DAYS} days.` : "Welcome back." });
       setMfaFactorId(null);
       setMfaCode("");
-      navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+      navigate(roleHomePath(role), { replace: true });
     } catch (err: any) {
       toast({ title: "Invalid code", description: err.message, variant: "destructive" });
     } finally {
@@ -144,7 +146,7 @@ export default function Login() {
       setMfaCode("");
       setRecoveryMode(false);
       setRecoveryCode("");
-      navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+      navigate(roleHomePath(role), { replace: true });
     } catch (err: any) {
       toast({ title: "Couldn't verify code", description: err.message, variant: "destructive" });
     } finally {
