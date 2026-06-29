@@ -119,25 +119,25 @@ export default function ClientOnboarding() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-sky font-['DM_Sans',_system-ui,_sans-serif]">
+    <main className="min-h-[100svh] flex items-start sm:items-center justify-center px-4 pt-6 pb-[max(2rem,env(safe-area-inset-bottom))] sm:py-10 bg-gradient-sky font-['DM_Sans',_system-ui,_sans-serif]">
       <SEO
         title="Welcome — CareBridge"
         description="A calm, step-by-step welcome to CareBridge."
       />
       <div className="w-full max-w-xl animate-fade-in">
         {/* Progress + language */}
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-5 sm:mb-6 flex items-center gap-3 sm:gap-4">
           {step > 1 ? (
             <button
               type="button"
               onClick={goBack}
-              className="h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-calm"
+              className="h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-calm touch-manipulation"
               aria-label={t.back}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
-            <div className="h-11 w-11" aria-hidden />
+            <div className="h-12 w-12" aria-hidden />
           )}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
@@ -147,7 +147,7 @@ export default function ClientOnboarding() {
           </div>
         </div>
 
-        <div className="glass-card p-8 md:p-10 shadow-float">
+        <div className="glass-card p-5 sm:p-8 md:p-10 shadow-float">
           {step === 1 && (
             <section className="space-y-8 text-center">
               <div className="space-y-3">
