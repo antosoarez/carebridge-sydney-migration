@@ -147,7 +147,7 @@ export default function ClientOnboarding() {
           </div>
         </div>
 
-        <div className="glass-card p-5 sm:p-8 md:p-10 shadow-float">
+        <div key={step} className="glass-card p-5 sm:p-8 md:p-10 shadow-float animate-fade-in">
           {step === 1 && (
             <section className="space-y-8 text-center">
               <div className="space-y-3">
