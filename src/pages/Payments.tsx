@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppShell } from "@/components/ocean/AppShell";
 import { ClientAvatar } from "@/components/ocean/ClientAvatar";
-import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
+import { ServicePaymentSection } from "@/components/ocean/ServicePaymentSection";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
