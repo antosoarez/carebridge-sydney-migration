@@ -49,7 +49,9 @@ export default function Payments() {
     (async () => {
       setLoadingTotals(true);
       const [{ data: fas }, { data: pays }] = await Promise.all([
-        supabase.from("client_fee_arrangements").select("client_id, total_amount, model, notes"),
+        supabase.from("client_fee_arrangements").select(
+          "client_id, total_amount, model, notes, service_tier_id, payment_arrangement, payment_request_issued_at"
+        ),
         supabase.from("client_payments").select("*"),
       ]);
       if (cancelled) return;
