@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth, Role } from "@/lib/auth";
+import { useAuth, Role, roleHomePath } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isCurrentDeviceTrusted } from "@/lib/trusted-device";
 
@@ -83,8 +83,12 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     return <Navigate to="/change-password" replace />;
   }
 
+  if (!role) {
+    return <Navigate to="/account-pending" replace />;
+  }
+
   if (requireRole && role !== requireRole) {
-    return <Navigate to={role === "advocate" ? "/advocate" : "/client"} replace />;
+    return <Navigate to={roleHomePath(role)} replace />;
   }
 
   // Gate clients who haven't finished onboarding. Allow the onboarding route

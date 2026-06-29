@@ -42,15 +42,16 @@ import BookAppointment from "./pages/BookAppointment";
 import ClientPayment from "./pages/ClientPayment";
 import ClientSupport from "./pages/ClientSupport";
 import { AuthProvider } from "./lib/auth";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { RequireAdvocate, RequireClient } from "./components/RequireAdvocate";
+import AccountPending from "./pages/AccountPending";
 
 const queryClient = new QueryClient();
 
 const A = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute requireRole="advocate">{children}</ProtectedRoute>
+  <RequireAdvocate>{children}</RequireAdvocate>
 );
 const C = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute requireRole="client">{children}</ProtectedRoute>
+  <RequireClient>{children}</RequireClient>
 );
 
 const App = () => (
@@ -69,8 +70,10 @@ const App = () => (
             <Route path="/intake" element={<Intake />} />
             <Route path="/check-in" element={<CheckIn />} />
             <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/account-pending" element={<AccountPending />} />
 
             <Route path="/advocate" element={<A><AdvocateDashboard /></A>} />
+            <Route path="/advocate/dashboard" element={<A><AdvocateDashboard /></A>} />
             <Route path="/advocate/clients" element={<A><AdvocateClients /></A>} />
             <Route path="/advocate/client/:id" element={<A><AdvocateClientDetail /></A>} />
             <Route path="/advocate/task/:id" element={<A><TaskDetail /></A>} />
@@ -91,6 +94,7 @@ const App = () => (
             <Route path="/advocate/settings" element={<A><Settings /></A>} />
 
             <Route path="/client" element={<C><ClientDashboard /></C>} />
+            <Route path="/client/dashboard" element={<C><ClientDashboard /></C>} />
             <Route path="/client/check-in" element={<C><CheckIn /></C>} />
             <Route path="/client/task/:id" element={<C><TaskDetail /></C>} />
             <Route path="/client/calendar" element={<C><CalendarPage /></C>} />

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, roleHomePath } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { SEO } from "@/components/SEO";
 
@@ -33,7 +33,7 @@ export default function ChangePassword() {
       const { error: actErr } = await supabase.functions.invoke("mark-activated", { body: {} });
       if (actErr) throw actErr;
       toast({ title: "Password updated 💙", description: "Welcome aboard." });
-      navigate(role === "advocate" ? "/advocate" : "/client", { replace: true });
+      navigate(roleHomePath(role), { replace: true });
     } catch (err: any) {
       toast({ title: "Couldn't update password", description: err.message, variant: "destructive" });
     } finally {
