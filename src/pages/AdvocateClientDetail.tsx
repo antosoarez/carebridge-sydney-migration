@@ -34,6 +34,7 @@ import { ClientCrmSummary } from "@/components/ocean/ClientCrmSummary";
 import { NavigationIntakeTab } from "@/components/ocean/NavigationIntakeTab";
 import { ClientIntakeTab } from "@/components/ocean/ClientIntakeTab";
 import { AgreementStatusList } from "@/components/ocean/AgreementStatusList";
+import { ServicePaymentSection } from "@/components/ocean/ServicePaymentSection";
 
 function countdownLabel(toDate: string | null): string | null {
   if (!toDate) return null;
