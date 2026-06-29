@@ -127,11 +127,18 @@ export default function ClientIntakeForm() {
     }
     setSubmitting(true);
     const res = await save(data, { submit: true });
-    setSubmitting(false);
     if (res?.error) {
+      setSubmitting(false);
       toast({ title: "Couldn't submit", description: res.error, variant: "destructive" });
       return;
     }
+    // Mark the intake step complete on the profile so the journey gate releases
+    // the client to the dashboard. A DB trigger on client_intake.submitted_at
+    // creates the advocate's "Review intake" to-do task (see docs SQL).
+    await (supabase.from("profiles") as any)
+      .update({ intake_completed_at: new Date().toISOString() })
+      .eq("id", user.id);
+    setSubmitting(false);
     toast({ title: "Intake submitted", description: "Your advocate will review this shortly." });
     navigate("/client");
   };
