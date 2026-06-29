@@ -241,12 +241,12 @@ export default function ClientOnboarding() {
               >
                 {t.s3_privacyLink}
               </a>
-              <label className="flex items-start gap-3 rounded-2xl border-2 border-border bg-card p-5 cursor-pointer hover:border-primary/40 transition-calm">
+              <label className="flex items-start gap-4 rounded-2xl border-2 border-border bg-card p-5 min-h-[60px] cursor-pointer hover:border-primary/40 active:border-primary/60 transition-calm touch-manipulation">
                 <input
                   type="checkbox"
                   checked={ackPrivacy}
                   onChange={(e) => setAckPrivacy(e.target.checked)}
-                  className="mt-1 h-5 w-5 rounded accent-primary shrink-0"
+                  className="mt-0.5 h-6 w-6 rounded accent-primary shrink-0"
                 />
                 <span className="text-sm leading-relaxed">{t.s3_consent}</span>
               </label>
