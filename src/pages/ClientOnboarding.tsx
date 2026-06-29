@@ -60,6 +60,14 @@ export default function ClientOnboarding() {
   const goBack = () => setStep((s) => Math.max(1, s - 1));
   const goNext = () => setStep((s) => Math.min(TOTAL_STEPS, s + 1));
 
+  // Smoothly scroll to top of the card on step change to avoid jumpy
+  // accordion behaviour on iOS Safari / Android Chrome when content height
+  // changes between steps.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const canContinue = useMemo(() => {
     if (step === 2) return ackScope;
     if (step === 3) return ackPrivacy;
