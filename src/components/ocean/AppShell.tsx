@@ -43,6 +43,7 @@ const advocateNav: NavItem[] = [
 
 const clientNav: NavItem[] = [
   { to: "/client", label: "Today", icon: Home },
+  { to: "/client/payment", label: "Payment", icon: Wallet },
   { to: "/client/check-in", label: "Check in", icon: Heart },
   { to: "/client/messages", label: "Messages", icon: MessageCircle },
   { to: "/client/todo", label: "To-do", icon: ListChecks },
