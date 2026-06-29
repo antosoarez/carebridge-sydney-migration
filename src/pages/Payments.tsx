@@ -271,13 +271,21 @@ export default function Payments() {
                       </Link>
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-5 -mt-1">
-                        <ClientPaymentTracker
+                      <div className="px-5 pb-5 -mt-1" key={`${c.id}-${refreshKey}`}>
+                        <ServicePaymentSection
                           clientId={c.id}
-                          clientName={c.name.split(" ")[0]}
-                          compact
-                          onAfterChange={() => setRefreshKey((k) => k + 1)}
+                          clientName={c.name}
                         />
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setRefreshKey((k) => k + 1)}
+                          >
+                            Refresh totals
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
