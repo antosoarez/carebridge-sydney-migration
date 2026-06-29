@@ -41,6 +41,10 @@ export default function Payments() {
   const [loadingTotals, setLoadingTotals] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const { tiers } = useServiceTiers();
+  const tierById = useMemo(() => Object.fromEntries(tiers.map((t) => [t.id, t])), [tiers]);
 
   useEffect(() => { setBankDetails(settings.bank_details); setCurrency(settings.currency); }, [settings]);
 
