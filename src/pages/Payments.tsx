@@ -204,13 +204,13 @@ export default function Payments() {
                 if (filter === "overdue") return overdue;
                 if (filter === "unpaid") return svcStatus.key === "unpaid";
                 if (filter === "partial") return svcStatus.key === "half_paid";
-                if (filter === "full") return svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external";
+                if (filter === "full") return svcStatus.key === "full_paid" || svcStatus.key === "waived";
                 return true;
               })
               .map(({ c, fa, paid, total, remaining, overdue, svcStatus, tier, lastPaid }) => {
                 const isOpen = expanded === c.id;
                 const tone: "complete" | "partial" | "pending" | "neutral" =
-                  svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external" ? "complete"
+                  svcStatus.key === "full_paid" || svcStatus.key === "waived" ? "complete"
                   : svcStatus.key === "half_paid" ? "partial"
                   : total > 0 ? "pending" : "neutral";
                 return (
