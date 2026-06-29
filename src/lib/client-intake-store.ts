@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EMPTY_INTAKE, type ClientIntakeRecord } from "./client-intake-types";
 
-const sb = supabase as unknown as { from: (t: string) => any };
-
 export function useClientIntake(clientId: string | undefined) {
   const [data, setData] = useState<ClientIntakeRecord>(EMPTY_INTAKE);
   const [loading, setLoading] = useState(true);
@@ -18,7 +16,7 @@ export function useClientIntake(clientId: string | undefined) {
     if (!clientId) return;
     (async () => {
       setLoading(true);
-      const { data: row, error } = await sb
+      const { data: row, error } = await supabase
         .from("client_intake")
         .select("*")
         .eq("client_id", clientId)
@@ -28,13 +26,18 @@ export function useClientIntake(clientId: string | undefined) {
         setError(error.message);
       }
       if (row) {
-        setData({
-          ...EMPTY_INTAKE,
-          ...row,
-          services_interested: Array.isArray(row.services_interested)
-            ? row.services_interested
-            : [],
-        });
+        // Map the typed DB row onto ClientIntakeRecord, coercing nulls to "".
+        const mapped: ClientIntakeRecord = { ...EMPTY_INTAKE };
+        for (const key of Object.keys(EMPTY_INTAKE) as (keyof ClientIntakeRecord)[]) {
+          const value = (row as Record<string, unknown>)[key];
+          if (key === "services_interested") {
+            mapped.services_interested = Array.isArray(value) ? (value as string[]) : [];
+          } else if (value !== null && value !== undefined) {
+            (mapped as Record<string, unknown>)[key] = value;
+          }
+        }
+        mapped.submitted_at = row.submitted_at ?? null;
+        setData(mapped);
         setSavedAt(row.updated_at ?? row.created_at ?? null);
       }
       setLoading(false);
@@ -55,7 +58,7 @@ export function useClientIntake(clientId: string | undefined) {
         updated_at: new Date().toISOString(),
       };
       if (opts?.submit) payload.submitted_at = new Date().toISOString();
-      const { error } = await sb
+      const { error } = await supabase
         .from("client_intake")
         .upsert(payload, { onConflict: "client_id" });
       setSaving(false);

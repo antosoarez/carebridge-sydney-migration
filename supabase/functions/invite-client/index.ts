@@ -65,8 +65,14 @@ Deno.serve(async (req) => {
     const newUserId = linkData?.user?.id ?? null;
     if (!actionLink) return json({ error: "Could not generate invite link" }, 500);
 
-    if (newUserId && phone) {
-      await admin.from("profiles").update({ phone }).eq("id", newUserId);
+    if (newUserId) {
+      if (phone) {
+        await admin.from("profiles").update({ phone }).eq("id", newUserId);
+      }
+      // Invited (advocate-created) client: flip the 'New enquiry' default to
+      // 'Invited' via SECURITY DEFINER RPC (the guard blocks service_role writes
+      // to lifecycle_status) so the enquiry_created automation does not fire.
+      await admin.rpc("mark_client_invited", { _client_id: newUserId });
     }
 
     await sendViaResend({

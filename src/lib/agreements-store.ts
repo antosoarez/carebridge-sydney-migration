@@ -1,13 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// NOTE: these tables are new in this migration; the generated types.ts
-// has not been regenerated yet, so we cast `from()` calls to untyped.
-const sb = supabase as unknown as {
-  from: (table: string) => any;
-  auth: typeof supabase.auth;
-};
-
 export type AgreementDocument = {
   id: string;
   slug: string;
@@ -35,14 +28,14 @@ export function useAgreements(clientId: string | undefined) {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data: d } = await sb
+    const { data: d } = await supabase
       .from("agreement_documents")
       .select("*")
       .eq("active", true)
       .order("sort_order", { ascending: true });
     let acc: AgreementAcceptance[] = [];
     if (clientId) {
-      const { data: a } = await sb
+      const { data: a } = await supabase
         .from("client_agreement_acceptances")
         .select("*")
         .eq("client_id", clientId);
@@ -62,8 +55,8 @@ export function useAgreements(clientId: string | undefined) {
 
   const accept = useCallback(async (doc: AgreementDocument, opts?: { notes?: string }) => {
     if (!clientId) return { error: "No client" };
-    const userRes = await sb.auth.getUser();
-    const { error } = await sb.from("client_agreement_acceptances").insert({
+    const userRes = await supabase.auth.getUser();
+    const { error } = await supabase.from("client_agreement_acceptances").insert({
       client_id: clientId,
       document_id: doc.id,
       document_slug: doc.slug,

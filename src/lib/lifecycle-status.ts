@@ -18,6 +18,12 @@ export const LIFECYCLE_STATUSES: LifecycleStatus[] = [
   "Completed",
   "Ongoing support",
   "Inactive",
+  // Automation-engine pipeline stages (Phase -1)
+  "Booked",
+  "Awaiting agreements",
+  "Awaiting payment",
+  "Work in progress",
+  "Report delivered",
 ];
 
 type Bucket = "active" | "onboarding" | "waiting" | "closed";
@@ -38,6 +44,12 @@ const BUCKET: Record<LifecycleStatus, Bucket> = {
   "Completed": "closed",
   "Ongoing support": "active",
   "Inactive": "closed",
+  // Automation-engine pipeline stages (Phase -1)
+  "Booked": "onboarding",
+  "Awaiting agreements": "waiting",
+  "Awaiting payment": "waiting",
+  "Work in progress": "active",
+  "Report delivered": "active",
 };
 
 const BUCKET_ORDER: Record<Bucket, number> = {

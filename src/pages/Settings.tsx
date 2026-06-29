@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/ocean/AppShell";
+import { AdvocateAvailabilityEditor } from "@/components/ocean/AdvocateAvailabilityEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -161,6 +162,12 @@ export default function Settings() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary-deep" />
             </Link>
+          </section>
+        )}
+
+        {role === "advocate" && (
+          <section className="glass-card p-6 lg:col-span-2">
+            <AdvocateAvailabilityEditor />
           </section>
         )}
 

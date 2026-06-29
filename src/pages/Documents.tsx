@@ -18,8 +18,23 @@ interface DocRow {
   size_bytes: number | null;
   status: "pending_review" | "triaged" | "archived";
   visibility: "shared" | "advocate_private";
+  category: string | null;
   created_at: string;
 }
+
+const DOC_CATEGORIES: { value: string; label: string }[] = [
+  { value: "pathology", label: "Pathology / blood tests" },
+  { value: "imaging", label: "Imaging / scans" },
+  { value: "specialist_letter", label: "Specialist letter" },
+  { value: "referral", label: "Referral" },
+  { value: "discharge", label: "Hospital discharge" },
+  { value: "prescription", label: "Prescription" },
+  { value: "myhealth", label: "My Health Record" },
+  { value: "report", label: "Report" },
+  { value: "other", label: "Other" },
+];
+const categoryLabel = (v: string | null) =>
+  DOC_CATEGORIES.find(c => c.value === v)?.label ?? null;
 
 interface PrivateFile {
   name: string;
@@ -55,6 +70,9 @@ export default function DocumentsPage() {
   const [clientsList, setClientsList] = useState<ProfileLite[]>([]);
   const [drag, setDrag] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [clientCategory, setClientCategory] = useState<string>("other");
+  const [doneSubmitting, setDoneSubmitting] = useState(false);
+  const [uploadsDone, setUploadsDone] = useState(false);
   const [advocateTab, setAdvocateTab] = useState<"clients" | "private">("clients");
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [openFolder, setOpenFolder] = useState<string | null>(null);
@@ -126,7 +144,7 @@ export default function DocumentsPage() {
       const { error: insErr } = await supabase.from("documents").insert({
         id: docId, client_id: user.id, uploaded_by: user.id,
         name: file.name, storage_path: path, mime_type: file.type, size_bytes: file.size,
-        visibility: "shared",
+        visibility: "shared", category: clientCategory,
       });
       if (insErr) { toast.error(`Couldn't save record: ${file.name}`); continue; }
       supabase.functions.invoke("send-transactional-email", {
@@ -142,6 +160,16 @@ export default function DocumentsPage() {
     toast.success("Uploaded — your advocate has been notified.");
     if (fileInput.current) fileInput.current.value = "";
     load();
+  };
+
+  // Client signals they've finished uploading -> notify the advocate (Phase 1 outbox).
+  const handleUploadsDone = async () => {
+    setDoneSubmitting(true);
+    const { error } = await supabase.rpc("client_uploads_done");
+    setDoneSubmitting(false);
+    if (error) { toast.error("Couldn't notify your advocate — please try again."); return; }
+    setUploadsDone(true);
+    toast.success("Thanks — your advocate has been notified you're done.");
   };
 
   // Advocate uploads into a client's folder (works even if client hasn't activated — folder is keyed on client_id).
@@ -230,6 +258,11 @@ export default function DocumentsPage() {
         </div>
         <p className="font-semibold truncate">{d.name}</p>
         <p className="text-xs text-muted-foreground mt-1">{formatSize(d.size_bytes)} · {formatDate(d.created_at)}</p>
+        {categoryLabel(d.category) && (
+          <span className="inline-block mt-1.5 text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-secondary/60 text-secondary-foreground">
+            {categoryLabel(d.category)}
+          </span>
+        )}
         {isAdvocate && owner && <p className="text-xs text-muted-foreground mt-0.5">{owner.full_name || owner.email}</p>}
         <div className="flex gap-2 mt-3">
           <Button variant="ghost" size="sm" className="flex-1 gap-2" onClick={() => download("client-documents", d.storage_path)}>
@@ -284,7 +317,18 @@ export default function DocumentsPage() {
             {uploading ? <Loader2 className="h-7 w-7 text-primary-foreground animate-spin" /> : <UploadCloud className="h-7 w-7 text-primary-foreground" />}
           </div>
           <h2 className="font-display text-2xl text-primary-deep">Upload a document</h2>
-          <p className="text-muted-foreground mt-1 mb-5">Drag & drop, or pick a file. PDFs, images, scans — all welcome.</p>
+          <p className="text-muted-foreground mt-1 mb-5">Drag & drop, or pick a file. PDFs, images, scans — all welcome. If you have access to My Health Record, you can download and upload those here too.</p>
+          <div className="max-w-xs mx-auto mb-4 text-left">
+            <label className="text-sm text-muted-foreground mb-1.5 block">What kind of document is this?</label>
+            <Select value={clientCategory} onValueChange={setClientCategory}>
+              <SelectTrigger className="rounded-2xl h-12"><SelectValue placeholder="Choose a type" /></SelectTrigger>
+              <SelectContent>
+                {DOC_CATEGORIES.map(c => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => handleClientFiles(e.target.files)} />
           <Button onClick={() => fileInput.current?.click()} disabled={uploading} className="rounded-2xl h-12 px-6 bg-gradient-ocean shadow-soft">
             {uploading ? "Uploading..." : "Choose file"}
@@ -294,7 +338,22 @@ export default function DocumentsPage() {
         {myDocs.length === 0 ? (
           <div className="glass-card p-10 text-center text-muted-foreground">No documents yet.</div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{myDocs.map(renderClientDocCard)}</div>
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{myDocs.map(renderClientDocCard)}</div>
+            <div className="glass-card p-6 mt-6 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                Finished adding everything you have? Let your advocate know so they can begin.
+              </p>
+              <Button
+                onClick={handleUploadsDone}
+                disabled={doneSubmitting || uploadsDone}
+                variant={uploadsDone ? "ghost" : "default"}
+                className="rounded-2xl h-12 px-6"
+              >
+                {uploadsDone ? "✓ Your advocate has been notified" : doneSubmitting ? "Letting them know..." : "I've uploaded everything"}
+              </Button>
+            </div>
+          </>
         )}
       </AppShell>
     );

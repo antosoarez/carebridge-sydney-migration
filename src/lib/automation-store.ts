@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const sb = supabase as unknown as { from: (t: string) => any };
-
 export type AutomationRule = {
   id: string;
   slug: string;
@@ -30,8 +28,8 @@ export function useAutomationRules() {
   const reload = useCallback(async () => {
     setLoading(true);
     const [r, a] = await Promise.all([
-      sb.from("automation_rules").select("*").order("priority", { ascending: true }),
-      sb.from("automation_rule_actions").select("*").order("sort_order", { ascending: true }),
+      supabase.from("automation_rules").select("*").order("priority", { ascending: true }),
+      supabase.from("automation_rule_actions").select("*").order("sort_order", { ascending: true }),
     ]);
     setRules((r.data as AutomationRule[]) ?? []);
     setActions((a.data as AutomationAction[]) ?? []);
@@ -41,7 +39,7 @@ export function useAutomationRules() {
   useEffect(() => { reload(); }, [reload]);
 
   const toggle = useCallback(async (id: string, enabled: boolean) => {
-    await sb.from("automation_rules").update({ enabled }).eq("id", id);
+    await supabase.from("automation_rules").update({ enabled }).eq("id", id);
     await reload();
   }, [reload]);
 

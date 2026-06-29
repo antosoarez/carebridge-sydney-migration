@@ -168,6 +168,16 @@ Deno.serve(async (req) => {
   const service_interest = sanitize((body.service_interest ?? '').toString(), 120)
   const preferred_contact = sanitize((body.preferred_contact ?? '').toString(), 30)
 
+  // Structured intake questions (optional): q1 help with, q2 what's going on,
+  // q3 steps taken (object of checkboxes + notes), q4 what matters most.
+  const intake_q1 = sanitize((body.intake_q1 ?? '').toString(), 500)
+  const intake_q2 = sanitize((body.intake_q2 ?? '').toString(), 2000)
+  const intake_q4 = sanitize((body.intake_q4 ?? '').toString(), 2000)
+  const intake_q3_steps =
+    body.intake_q3_steps && typeof body.intake_q3_steps === 'object' && !Array.isArray(body.intake_q3_steps)
+      ? (body.intake_q3_steps as Record<string, unknown>)
+      : null
+
   if (!name) return json({ ok: false, message: 'Name required' }, 400, cors)
   if (!isEmail(email)) return json({ ok: false, message: 'Valid email required' }, 400, cors)
   if (!message) return json({ ok: false, message: 'Message required' }, 400, cors)
@@ -188,6 +198,10 @@ Deno.serve(async (req) => {
     service_interest: service_interest || null,
     preferred_contact: preferred_contact || (language ? `language:${language}` : null),
     ip_address: ip,
+    intake_q1: intake_q1 || null,
+    intake_q2: intake_q2 || null,
+    intake_q3_steps: intake_q3_steps,
+    intake_q4: intake_q4 || null,
   })
 
   if (error) {
