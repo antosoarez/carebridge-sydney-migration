@@ -148,7 +148,31 @@ export default function Payments() {
 
       {/* Per-client list */}
       <section>
-        <h2 className="font-display text-xl text-primary-deep mb-3">Clients</h2>
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <h2 className="font-display text-xl text-primary-deep mr-auto">Clients</h2>
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search client…"
+              className="pl-9 rounded-2xl bg-secondary/40 border-0 h-10 w-64"
+            />
+          </div>
+          <Select value={filter} onValueChange={(v) => setFilter(v as FilterKey)}>
+            <SelectTrigger className="rounded-2xl h-10 w-44 bg-secondary/40 border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clients</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+              <SelectItem value="partial">Partially paid</SelectItem>
+              <SelectItem value="full">Fully paid</SelectItem>
+              <SelectItem value="overdue">Overdue (7+ days)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {loading ? (
           <div className="glass-card p-8 text-center text-muted-foreground">Loading…</div>
         ) : clients.length === 0 ? (
@@ -160,65 +184,105 @@ export default function Payments() {
           </div>
         ) : (
           <div className="space-y-3">
-            {clients.map((c) => {
-              const fa = arrangements[c.id] ?? null;
-              const pays = paymentsByClient[c.id] ?? [];
-              const status = statusLabel(fa, pays);
-              const paid = pays.filter((p: any) => p.paid).reduce((s, p: any) => s + Number(p.amount), 0);
-              const total = fa?.total_amount ?? 0;
-              const overdue = pays.some((p: any) => p.invoice_given && !p.paid && isOverdueSevenDays(p.invoice_given_at));
-              const isOpen = expanded === c.id;
-              return (
-                <div key={c.id} className="glass-card overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : c.id)}
-                    className="w-full p-5 flex items-center gap-4 text-left hover:bg-secondary/20 transition-calm"
-                  >
-                    <ClientAvatar name={c.name} gradient={c.avatarColor} colourKey={c.clientColour} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-primary-deep truncate">{c.name}</p>
-                        <span className={cn(
-                          "text-xs px-2 py-0.5 rounded-full font-semibold",
-                          status.tone === "complete" && "bg-primary/15 text-primary-deep",
-                          status.tone === "partial"  && "bg-accent/20 text-primary-deep",
-                          status.tone === "pending"  && "bg-secondary/60 text-primary-deep",
-                          status.tone === "neutral"  && "bg-secondary/40 text-muted-foreground",
-                        )}>{status.label}</span>
-                        {overdue && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-accent/15 text-accent">
-                            Gentle nudge
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {total > 0
-                          ? `${formatCurrency(paid, settings.currency)} of ${formatCurrency(total, settings.currency)} received`
-                          : "No arrangement yet"}
-                      </p>
-                    </div>
-                    <Link
-                      to={`/advocate/client/${c.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
+            {clients
+              .map((c) => {
+                const fa = arrangements[c.id] ?? null;
+                const pays = paymentsByClient[c.id] ?? [];
+                const paid = pays.filter((p: any) => p.paid).reduce((s, p: any) => s + Number(p.amount), 0);
+                const total = Number(fa?.total_amount ?? 0);
+                const remaining = Math.max(0, total - paid);
+                const overdue = pays.some((p: any) => p.invoice_given && !p.paid && isOverdueSevenDays(p.invoice_given_at));
+                const svcStatus = paymentStatus(total, paid, fa?.payment_arrangement ?? null);
+                const tier = fa?.service_tier_id ? tierById[fa.service_tier_id] : null;
+                const lastPaid = pays.filter((p: any) => p.paid).sort((a: any, b: any) =>
+                  new Date(b.paid_at || 0).getTime() - new Date(a.paid_at || 0).getTime())[0];
+                return { c, fa, pays, paid, total, remaining, overdue, svcStatus, tier, lastPaid };
+              })
+              .filter(({ c, svcStatus, overdue }) => {
+                if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
+                if (filter === "all") return true;
+                if (filter === "overdue") return overdue;
+                if (filter === "unpaid") return svcStatus.key === "unpaid";
+                if (filter === "partial") return svcStatus.key === "half_paid";
+                if (filter === "full") return svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external";
+                return true;
+              })
+              .map(({ c, fa, paid, total, remaining, overdue, svcStatus, tier, lastPaid }) => {
+                const isOpen = expanded === c.id;
+                const tone: "complete" | "partial" | "pending" | "neutral" =
+                  svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external" ? "complete"
+                  : svcStatus.key === "half_paid" ? "partial"
+                  : total > 0 ? "pending" : "neutral";
+                return (
+                  <div key={c.id} className="glass-card overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : c.id)}
+                      className="w-full p-5 flex items-center gap-4 text-left hover:bg-secondary/20 transition-calm"
                     >
-                      Open file
-                    </Link>
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 -mt-1">
-                      <ClientPaymentTracker
-                        clientId={c.id}
-                        clientName={c.name.split(" ")[0]}
-                        compact
-                        onAfterChange={() => setRefreshKey((k) => k + 1)}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                      <ClientAvatar name={c.name} gradient={c.avatarColor} colourKey={c.clientColour} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-primary-deep truncate">{c.name}</p>
+                          <span className={cn(
+                            "text-xs px-2 py-0.5 rounded-full font-semibold",
+                            tone === "complete" && "bg-primary/15 text-primary-deep",
+                            tone === "partial"  && "bg-accent/20 text-primary-deep",
+                            tone === "pending"  && "bg-secondary/60 text-primary-deep",
+                            tone === "neutral"  && "bg-secondary/40 text-muted-foreground",
+                          )}>{svcStatus.label}</span>
+                          {overdue && (
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-accent/15 text-accent">
+                              Overdue
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                          <span>
+                            <span className="text-primary-deep/70">Service:</span>{" "}
+                            {tier?.name ?? (fa?.service_tier_id ? "Tier" : fa ? "Custom" : "—")}
+                          </span>
+                          {fa?.payment_arrangement && (
+                            <span>
+                              <span className="text-primary-deep/70">Arrangement:</span>{" "}
+                              {PAYMENT_ARRANGEMENT_LABEL[fa.payment_arrangement as keyof typeof PAYMENT_ARRANGEMENT_LABEL]}
+                            </span>
+                          )}
+                          <span>
+                            <span className="text-primary-deep/70">Method:</span>{" "}
+                            {lastPaid?.payment_method ? String(lastPaid.payment_method).replace(/_/g, " ") : "—"}
+                          </span>
+                          <span>
+                            <span className="text-primary-deep/70">Remaining:</span>{" "}
+                            {formatCurrency(remaining, settings.currency)}
+                          </span>
+                          <span>
+                            <span className="text-primary-deep/70">Paid:</span>{" "}
+                            {formatCurrency(paid, settings.currency)} of {formatCurrency(total, settings.currency)}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        to={`/advocate/client/${c.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
+                      >
+                        Open file
+                      </Link>
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 -mt-1">
+                        <ClientPaymentTracker
+                          clientId={c.id}
+                          clientName={c.name.split(" ")[0]}
+                          compact
+                          onAfterChange={() => setRefreshKey((k) => k + 1)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         )}
       </section>
