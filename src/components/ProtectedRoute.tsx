@@ -53,10 +53,13 @@ export function ProtectedRoute({ children, requireRole }: Props) {
 
       // Journey gate: fail OPEN on any error or missing row (never lock out).
       if (error || !data || data.gating_override) { setGateTarget(null); setGateChecked(true); return; }
+      // Journey order after the discovery call:
+      //   1. Payment (advocate can mark paid externally / override)
+      //   2. Policies & Agreements (advocate can also mark complete externally)
+      //   3. Health Intake Form (on submit → advocate gets a "Review intake" task)
       const steps: Array<{ done: boolean; target: string }> = [
-        { done: !!data.agreements_completed_at, target: "/client/agreements" },
         { done: !!data.payment_completed_at, target: "/client/payment" },
-        { done: !!data.consultation_booked_at, target: "/book-appointment" },
+        { done: !!data.agreements_completed_at, target: "/client/agreements" },
         { done: !!data.intake_completed_at, target: "/client/intake-form" },
       ];
       const firstUnmet = steps.find((s) => !s.done);
