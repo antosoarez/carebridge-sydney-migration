@@ -166,7 +166,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setLangPersist(l)}
                       className={cn(
-                        "h-14 rounded-2xl border-2 text-base font-medium transition-calm text-left px-5 flex items-center justify-between",
+                        "h-16 rounded-2xl border-2 text-base font-medium transition-calm text-left px-5 flex items-center justify-between touch-manipulation active:scale-[0.99]",
                         lang === l
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
