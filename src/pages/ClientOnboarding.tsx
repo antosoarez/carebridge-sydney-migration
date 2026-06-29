@@ -378,11 +378,11 @@ export default function ClientOnboarding() {
           )}
 
           {step < 6 && (
-            <div className="mt-8">
+            <div className="mt-8 sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:static z-10">
               <Button
                 onClick={goNext}
                 disabled={!canContinue}
-                className="w-full h-14 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-soft"
+                className="w-full h-14 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-float touch-manipulation active:scale-[0.99]"
               >
                 {t.continue}
               </Button>
