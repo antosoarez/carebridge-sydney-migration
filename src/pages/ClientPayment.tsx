@@ -40,7 +40,7 @@ export default function ClientPayment() {
   const serviceSelected = !!arrangement?.service_selected_at;
   const paymentLink = arrangement?.external_payment_link_url || tier?.stripe_payment_link || null;
   const canPay = requestIssued && paymentLink && status.key !== "full_paid"
-    && status.key !== "waived" && status.key !== "external";
+    && status.key !== "waived";
 
   const pay = () => {
     if (!paymentLink) return;
