@@ -60,6 +60,14 @@ export default function ClientOnboarding() {
   const goBack = () => setStep((s) => Math.max(1, s - 1));
   const goNext = () => setStep((s) => Math.min(TOTAL_STEPS, s + 1));
 
+  // Smoothly scroll to top of the card on step change to avoid jumpy
+  // accordion behaviour on iOS Safari / Android Chrome when content height
+  // changes between steps.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const canContinue = useMemo(() => {
     if (step === 2) return ackScope;
     if (step === 3) return ackPrivacy;
@@ -111,25 +119,25 @@ export default function ClientOnboarding() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-sky font-['DM_Sans',_system-ui,_sans-serif]">
+    <main className="min-h-[100svh] flex items-start sm:items-center justify-center px-4 pt-6 pb-[max(2rem,env(safe-area-inset-bottom))] sm:py-10 bg-gradient-sky font-['DM_Sans',_system-ui,_sans-serif]">
       <SEO
         title="Welcome — CareBridge"
         description="A calm, step-by-step welcome to CareBridge."
       />
       <div className="w-full max-w-xl animate-fade-in">
         {/* Progress + language */}
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-5 sm:mb-6 flex items-center gap-3 sm:gap-4">
           {step > 1 ? (
             <button
               type="button"
               onClick={goBack}
-              className="h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-calm"
+              className="h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-calm touch-manipulation"
               aria-label={t.back}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
-            <div className="h-11 w-11" aria-hidden />
+            <div className="h-12 w-12" aria-hidden />
           )}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
@@ -139,7 +147,7 @@ export default function ClientOnboarding() {
           </div>
         </div>
 
-        <div className="glass-card p-8 md:p-10 shadow-float">
+        <div key={step} className="glass-card p-5 sm:p-8 md:p-10 shadow-float animate-fade-in">
           {step === 1 && (
             <section className="space-y-8 text-center">
               <div className="space-y-3">
@@ -158,7 +166,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setLangPersist(l)}
                       className={cn(
-                        "h-14 rounded-2xl border-2 text-base font-medium transition-calm text-left px-5 flex items-center justify-between",
+                        "h-16 rounded-2xl border-2 text-base font-medium transition-calm text-left px-5 flex items-center justify-between touch-manipulation active:scale-[0.99]",
                         lang === l
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
@@ -194,12 +202,12 @@ export default function ClientOnboarding() {
                 ))}
               </ul>
               <EmergencyNotice compact />
-              <label className="flex items-start gap-3 rounded-2xl border-2 border-border bg-card p-5 cursor-pointer hover:border-primary/40 transition-calm">
+              <label className="flex items-start gap-4 rounded-2xl border-2 border-border bg-card p-5 min-h-[60px] cursor-pointer hover:border-primary/40 active:border-primary/60 transition-calm touch-manipulation">
                 <input
                   type="checkbox"
                   checked={ackScope}
                   onChange={(e) => setAckScope(e.target.checked)}
-                  className="mt-1 h-5 w-5 rounded accent-primary shrink-0"
+                  className="mt-0.5 h-6 w-6 rounded accent-primary shrink-0"
                 />
                 <span className="text-sm leading-relaxed">{t.s2_ack}</span>
               </label>
@@ -233,12 +241,12 @@ export default function ClientOnboarding() {
               >
                 {t.s3_privacyLink}
               </a>
-              <label className="flex items-start gap-3 rounded-2xl border-2 border-border bg-card p-5 cursor-pointer hover:border-primary/40 transition-calm">
+              <label className="flex items-start gap-4 rounded-2xl border-2 border-border bg-card p-5 min-h-[60px] cursor-pointer hover:border-primary/40 active:border-primary/60 transition-calm touch-manipulation">
                 <input
                   type="checkbox"
                   checked={ackPrivacy}
                   onChange={(e) => setAckPrivacy(e.target.checked)}
-                  className="mt-1 h-5 w-5 rounded accent-primary shrink-0"
+                  className="mt-0.5 h-6 w-6 rounded accent-primary shrink-0"
                 />
                 <span className="text-sm leading-relaxed">{t.s3_consent}</span>
               </label>
@@ -258,7 +266,9 @@ export default function ClientOnboarding() {
                   value={preferredName}
                   onChange={(e) => setPreferredName(e.target.value)}
                   placeholder={t.s4_preferredNamePh}
-                  className="h-14 rounded-2xl bg-card text-base"
+                  autoComplete="given-name"
+                  inputMode="text"
+                  className="h-14 rounded-2xl bg-card text-base [font-size:16px]"
                 />
               </div>
               <div className="space-y-2">
@@ -270,7 +280,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setLangPersist(l)}
                       className={cn(
-                        "h-12 rounded-2xl border-2 text-sm font-medium transition-calm",
+                        "h-14 rounded-2xl border-2 text-sm font-medium transition-calm touch-manipulation active:scale-[0.98]",
                         lang === l
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
@@ -290,7 +300,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setPreferredContact(m)}
                       className={cn(
-                        "h-12 rounded-2xl border-2 text-sm font-medium transition-calm",
+                        "h-14 rounded-2xl border-2 text-sm font-medium transition-calm touch-manipulation active:scale-[0.98]",
                         preferredContact === m
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
@@ -368,11 +378,11 @@ export default function ClientOnboarding() {
           )}
 
           {step < 6 && (
-            <div className="mt-8">
+            <div className="mt-8 sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:static z-10">
               <Button
                 onClick={goNext}
                 disabled={!canContinue}
-                className="w-full h-14 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-soft"
+                className="w-full h-14 rounded-2xl bg-gradient-ocean text-base font-semibold shadow-float touch-manipulation active:scale-[0.99]"
               >
                 {t.continue}
               </Button>
