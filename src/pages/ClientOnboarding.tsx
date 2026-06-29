@@ -266,7 +266,9 @@ export default function ClientOnboarding() {
                   value={preferredName}
                   onChange={(e) => setPreferredName(e.target.value)}
                   placeholder={t.s4_preferredNamePh}
-                  className="h-14 rounded-2xl bg-card text-base"
+                  autoComplete="given-name"
+                  inputMode="text"
+                  className="h-14 rounded-2xl bg-card text-base [font-size:16px]"
                 />
               </div>
               <div className="space-y-2">
@@ -278,7 +280,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setLangPersist(l)}
                       className={cn(
-                        "h-12 rounded-2xl border-2 text-sm font-medium transition-calm",
+                        "h-14 rounded-2xl border-2 text-sm font-medium transition-calm touch-manipulation active:scale-[0.98]",
                         lang === l
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
@@ -298,7 +300,7 @@ export default function ClientOnboarding() {
                       type="button"
                       onClick={() => setPreferredContact(m)}
                       className={cn(
-                        "h-12 rounded-2xl border-2 text-sm font-medium transition-calm",
+                        "h-14 rounded-2xl border-2 text-sm font-medium transition-calm touch-manipulation active:scale-[0.98]",
                         preferredContact === m
                           ? "border-primary bg-primary/5 text-primary-deep"
                           : "border-border bg-card hover:border-primary/40",
