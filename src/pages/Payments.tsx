@@ -6,6 +6,7 @@ import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { useClients } from "@/lib/clients-store";
@@ -15,8 +16,11 @@ import {
   statusLabel,
   usePaymentSettings,
 } from "@/lib/payments-store";
-import { Receipt, Wallet, Landmark, Waves } from "lucide-react";
+import { PAYMENT_ARRANGEMENT_LABEL, paymentStatus, useServiceTiers } from "@/lib/service-payment-store";
+import { Receipt, Wallet, Landmark, Waves, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type FilterKey = "all" | "unpaid" | "partial" | "full" | "overdue";
 
 interface Summary {
   totalAgreed: number;
