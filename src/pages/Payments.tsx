@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppShell } from "@/components/ocean/AppShell";
 import { ClientAvatar } from "@/components/ocean/ClientAvatar";
-import { ClientPaymentTracker } from "@/components/ocean/ClientPaymentTracker";
+import { ServicePaymentSection } from "@/components/ocean/ServicePaymentSection";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -204,13 +204,13 @@ export default function Payments() {
                 if (filter === "overdue") return overdue;
                 if (filter === "unpaid") return svcStatus.key === "unpaid";
                 if (filter === "partial") return svcStatus.key === "half_paid";
-                if (filter === "full") return svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external";
+                if (filter === "full") return svcStatus.key === "full_paid" || svcStatus.key === "waived";
                 return true;
               })
               .map(({ c, fa, paid, total, remaining, overdue, svcStatus, tier, lastPaid }) => {
                 const isOpen = expanded === c.id;
                 const tone: "complete" | "partial" | "pending" | "neutral" =
-                  svcStatus.key === "full_paid" || svcStatus.key === "waived" || svcStatus.key === "external" ? "complete"
+                  svcStatus.key === "full_paid" || svcStatus.key === "waived" ? "complete"
                   : svcStatus.key === "half_paid" ? "partial"
                   : total > 0 ? "pending" : "neutral";
                 return (
@@ -271,13 +271,21 @@ export default function Payments() {
                       </Link>
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-5 -mt-1">
-                        <ClientPaymentTracker
+                      <div className="px-5 pb-5 -mt-1" key={`${c.id}-${refreshKey}`}>
+                        <ServicePaymentSection
                           clientId={c.id}
-                          clientName={c.name.split(" ")[0]}
-                          compact
-                          onAfterChange={() => setRefreshKey((k) => k + 1)}
+                          clientName={c.name}
                         />
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setRefreshKey((k) => k + 1)}
+                          >
+                            Refresh totals
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

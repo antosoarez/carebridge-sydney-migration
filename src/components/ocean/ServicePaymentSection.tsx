@@ -166,7 +166,7 @@ export function ServicePaymentSection({ clientId, clientName }: { clientId: stri
     reload();
   };
 
-  const isFullyPaid = status.key === "full_paid" || status.key === "waived" || status.key === "external";
+  const isFullyPaid = status.key === "full_paid" || status.key === "waived";
   const workUnlocked = gatingOverride || isFullyPaid;
   const requiredDocs = docs.filter((d) => d.required);
 

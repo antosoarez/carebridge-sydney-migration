@@ -203,9 +203,12 @@ export function paymentStatus(
   totalAmount: number,
   paidTotal: number,
   arrangement: PaymentArrangement | null,
-): { key: "unpaid" | "half_paid" | "full_paid" | "waived" | "external"; label: string } {
+): { key: "unpaid" | "half_paid" | "full_paid" | "waived"; label: string } {
+  // NOTE: "external" is an arrangement (paid outside Stripe), NOT a payment status.
+  // It must NOT automatically mean paid — the advocate still has to record the
+  // payment manually (or enable the work-gate override) for the client to be
+  // considered paid and for work to unlock.
   if (arrangement === "waived") return { key: "waived", label: "Waived / pro bono" };
-  if (arrangement === "external") return { key: "external", label: "Paid externally" };
   if (totalAmount > 0 && paidTotal >= totalAmount) return { key: "full_paid", label: "Fully paid" };
   if (paidTotal > 0) return { key: "half_paid", label: "Partially paid" };
   return { key: "unpaid", label: "Unpaid" };
