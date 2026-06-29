@@ -109,7 +109,7 @@ export default function ClientPayment() {
                 Pay {fmt(remaining)}
               </Button>
             ) : requestIssued ? (
-              status.key === "full_paid" || status.key === "waived" || status.key === "external" ? (
+              status.key === "full_paid" || status.key === "waived" ? (
                 <p className="text-sm text-muted-foreground">Nothing further owed — thank you.</p>
               ) : (
                 <p className="text-sm text-muted-foreground">
