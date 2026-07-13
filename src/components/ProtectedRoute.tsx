@@ -87,7 +87,9 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     );
   }
 
-  if (!user || mfaState === "needs") return <Navigate to="/" replace />;
+  if ((!user || mfaState === "needs") && location.pathname !== "/") {
+    return <Navigate to="/" replace />;
+  }
 
   if (pwdCheck === "needs" && location.pathname !== "/change-password") {
     return <Navigate to="/change-password" replace />;
