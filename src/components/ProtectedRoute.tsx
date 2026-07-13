@@ -109,6 +109,8 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   if (requireRole === "client" && gateTarget) {
     const path = location.pathname;
     const alwaysAllowed =
+      path.startsWith("/client/onboarding") ||
+      path.startsWith("/client/navigation-intake") ||
       path.startsWith("/client/agreements") ||
       path.startsWith("/client/settings") ||
       path.startsWith("/client/support") ||

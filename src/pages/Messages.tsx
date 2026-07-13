@@ -142,7 +142,7 @@ function ThreadView({
         thread_id: threadId,
         sender_id: currentUserId,
         sender_role: viewerRole, // trigger will overwrite anyway
-        body: body || "📎 Attachment",
+        body: body || "Attachment",
       })
       .select("*")
       .single();
