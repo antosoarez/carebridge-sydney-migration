@@ -14,6 +14,7 @@ import { LifeBuoy } from "lucide-react";
 import { verifyRecoveryCode } from "@/lib/recovery-codes";
 import { isCurrentDeviceTrusted, trustCurrentDevice, TRUST_DURATION_DAYS } from "@/lib/trusted-device";
 import { Checkbox } from "@/components/ui/checkbox";
+import { isInviteAuthCallback } from "@/lib/invite-routing";
 
 const SUPPORT_EMAIL = "hello@carebridgeperth.com";
 
@@ -58,6 +59,10 @@ export default function Login() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined" && isInviteAuthCallback(new URL(window.location.href))) {
+      return;
+    }
+
     if (!loading && user && !mfaFactorId) {
       if (!role) {
         navigate("/account-pending", { replace: true });

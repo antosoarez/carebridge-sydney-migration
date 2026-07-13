@@ -10,6 +10,7 @@ import { useAuth, roleHomePath } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { SEO } from "@/components/SEO";
 import { EmergencyNotice } from "@/components/ocean/EmergencyNotice";
+import { isInviteAuthCallback } from "@/lib/invite-routing";
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Welcome() {
   const [submitting, setSubmitting] = useState(false);
   const [waitedForSession, setWaitedForSession] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [isInviteCallback, setIsInviteCallback] = useState(false);
 
   // Detect an invite-link error in the URL hash (expired / already used).
   const hashError = useMemo(() => {
@@ -31,6 +33,11 @@ export default function Welcome() {
     const err = params.get("error") || params.get("error_code");
     const desc = params.get("error_description");
     return err || desc ? { err, desc } : null;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsInviteCallback(isInviteAuthCallback(new URL(window.location.href)));
   }, []);
 
   // Give supabase-js a moment to consume the invite token from the hash.
@@ -68,7 +75,7 @@ export default function Welcome() {
     }
   };
 
-  const linkBroken = !loading && !user && (hashError || waitedForSession);
+  const linkBroken = !loading && !user && (hashError || (waitedForSession && !isInviteCallback));
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-sky">
