@@ -44,6 +44,7 @@ import ClientSupport from "./pages/ClientSupport";
 import { AuthProvider } from "./lib/auth";
 import { RequireAdvocate, RequireClient } from "./components/RequireAdvocate";
 import AccountPending from "./pages/AccountPending";
+import { isInviteAuthCallback } from "./lib/invite-routing";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,13 @@ const C = ({ children }: { children: React.ReactNode }) => (
   <RequireClient>{children}</RequireClient>
 );
 
+function RootRoute() {
+  if (typeof window !== "undefined" && isInviteAuthCallback(new URL(window.location.href))) {
+    return <Welcome />;
+  }
+  return <Login />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -62,7 +70,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<RootRoute />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/set-password" element={<Welcome />} />
             <Route path="/accept-invite" element={<Welcome />} />
