@@ -38,36 +38,46 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     return () => { cancelled = true; };
   }, [user]);
 
+  // 1. Extraemos el ID como una variable primitiva (string o undefined) antes del efecto
+  const userId = user?.id;
+
   useEffect(() => {
-    if (!user) { setPwdCheck("ok"); setOnboardingCheck("ok"); setGateChecked(true); return; }
+    // 2. Evaluamos usando userId en lugar del objeto user completo
+    if (!userId) { 
+      setPwdCheck("ok"); 
+      setOnboardingCheck("ok"); 
+      setGateChecked(true); 
+      return; 
+    }
+    
     let cancelled = false;
     (async () => {
       const { data, error } = await (supabase
         .from("profiles") as any)
         .select("must_change_password, onboarding_completed_at, gating_override, agreements_completed_at, payment_completed_at, consultation_booked_at, intake_completed_at")
-        .eq("id", user.id)
+        .eq("id", userId) // 3. Usamos la variable primitiva aquí
         .maybeSingle();
+        
       if (cancelled) return;
       setPwdCheck(data?.must_change_password ? "needs" : "ok");
       setOnboardingCheck(data?.onboarding_completed_at ? "ok" : "needs");
 
       // Journey gate: fail OPEN on any error or missing row (never lock out).
       if (error || !data || data.gating_override) { setGateTarget(null); setGateChecked(true); return; }
-      // Journey order after the discovery call:
-      //   1. Payment (advocate can mark paid externally / override)
-      //   2. Policies & Agreements (advocate can also mark complete externally)
-      //   3. Health Intake Form (on submit → advocate gets a "Review intake" task)
+      
       const steps: Array<{ done: boolean; target: string }> = [
         { done: !!data.payment_completed_at, target: "/client/payment" },
         { done: !!data.agreements_completed_at, target: "/client/agreements" },
         { done: !!data.intake_completed_at, target: "/client/intake-form" },
       ];
+      
       const firstUnmet = steps.find((s) => !s.done);
       setGateTarget(firstUnmet ? firstUnmet.target : null);
       setGateChecked(true);
     })();
+    
     return () => { cancelled = true; };
-  }, [user, location.pathname]);
+  }, [userId]); // 4. El array ahora solo depende de nuestro string primitivo
 
   if (loading || mfaState === "checking" || pwdCheck === "checking" || onboardingCheck === "checking" || !gateChecked) {
     return (
