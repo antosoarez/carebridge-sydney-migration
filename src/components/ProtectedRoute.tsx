@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, Role, roleHomePath } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isCurrentDeviceTrusted } from "@/lib/trusted-device";
+import { isInviteAuthCallback } from "@/lib/invite-routing";
 
 interface Props {
   children: React.ReactNode;
@@ -40,10 +41,11 @@ export function ProtectedRoute({ children, requireRole }: Props) {
 
   // 1. Extraemos el ID como una variable primitiva (string o undefined) antes del efecto
   const userId = user?.id;
+  const isInviteFlow = typeof window !== "undefined" && isInviteAuthCallback(new URL(window.location.href));
 
   useEffect(() => {
     // 2. Evaluamos usando userId en lugar del objeto user completo
-    if (!userId) { 
+    if (!userId || isInviteFlow) { 
       setPwdCheck("ok"); 
       setOnboardingCheck("ok"); 
       setGateChecked(true); 
@@ -77,7 +79,7 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     })();
     
     return () => { cancelled = true; };
-  }, [userId]); // 4. El array ahora solo depende de nuestro string primitivo
+  }, [userId, isInviteFlow]); // 4. El array ahora solo depende de nuestro string primitivo
 
   if (loading || mfaState === "checking" || pwdCheck === "checking" || onboardingCheck === "checking" || !gateChecked) {
     return (
@@ -110,6 +112,7 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   if (
     requireRole === "client" &&
     onboardingCheck === "needs" &&
+    !isInviteFlow &&
     !location.pathname.startsWith("/client/onboarding") &&
     !location.pathname.startsWith("/client/navigation-intake") &&
     !location.pathname.startsWith("/client/agreements")
