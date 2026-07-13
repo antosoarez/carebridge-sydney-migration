@@ -93,11 +93,13 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     return <Navigate to="/change-password" replace />;
   }
 
-  if (!role) {
+  // Solo navega si NO está ya en account-pending
+  if (!role && location.pathname !== "/account-pending") {
     return <Navigate to="/account-pending" replace />;
   }
 
-  if (requireRole && role !== requireRole) {
+  // Solo navega si NO está ya en el home de su rol correspondiente
+  if (requireRole && role !== requireRole && location.pathname !== roleHomePath(role)) {
     return <Navigate to={roleHomePath(role)} replace />;
   }
 
