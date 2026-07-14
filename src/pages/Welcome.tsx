@@ -10,7 +10,7 @@ import { useAuth, roleHomePath } from "@/lib/auth";
 import { toast } from "@/components/ui/use-toast";
 import { SEO } from "@/components/SEO";
 import { EmergencyNotice } from "@/components/ocean/EmergencyNotice";
-import { isInviteAuthCallback } from "@/lib/invite-routing";
+import { getInviteAuthTokens, isInviteAuthCallback } from "@/lib/invite-routing";
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -38,6 +38,30 @@ export default function Welcome() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     setIsInviteCallback(isInviteAuthCallback(new URL(window.location.href)));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInviteAuthCallback(new URL(window.location.href))) return;
+
+    const tokens = getInviteAuthTokens(new URL(window.location.href));
+    if (!tokens?.accessToken || !tokens.refreshToken) return;
+
+    let active = true;
+    (async () => {
+      const { error } = await supabase.auth.setSession({
+        access_token: tokens.accessToken!,
+        refresh_token: tokens.refreshToken!,
+      });
+      if (!active) return;
+      if (error) {
+        console.error("Failed to hydrate invite session", error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Give supabase-js a moment to consume the invite token from the hash.
