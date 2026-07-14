@@ -4,6 +4,7 @@ import { useAuth, Role, roleHomePath } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isCurrentDeviceTrusted } from "@/lib/trusted-device";
 import { isInviteAuthCallback } from "@/lib/invite-routing";
+import { getClientRouteRedirect } from "./protected-route-logic";
 
 interface Props {
   children: React.ReactNode;
@@ -107,39 +108,16 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     return <Navigate to={roleHomePath(role)} replace />;
   }
 
-  // Gate clients who haven't finished onboarding. Allow the onboarding route
-  // itself (and its sub-steps like /client/navigation-intake) through.
-  if (
-    requireRole === "client" &&
-    onboardingCheck === "needs" &&
-    !isInviteFlow &&
-    !location.pathname.startsWith("/client/onboarding") &&
-    !location.pathname.startsWith("/client/navigation-intake") &&
-    !location.pathname.startsWith("/client/agreements")
-  ) {
-    return <Navigate to="/client/onboarding" replace />;
-  }
+  const redirectTarget = getClientRouteRedirect({
+    requireRole,
+    onboardingCheck,
+    gateTarget,
+    pathname: location.pathname,
+    isInviteFlow,
+  });
 
-  // Journey gate: enforce agreements → payment → booking → health intake order.
-  // Escape hatches always render (never lock the client out): the gate targets
-  // themselves, settings, support, the safety check-in page, and password change.
-  if (requireRole === "client" && gateTarget) {
-    const path = location.pathname;
-    const alwaysAllowed =
-      path.startsWith("/client/onboarding") ||
-      path.startsWith("/client/navigation-intake") ||
-      path.startsWith("/client/agreements") ||
-      path.startsWith("/client/settings") ||
-      path.startsWith("/client/support") ||
-      path.startsWith("/client/payment") ||
-      path.startsWith("/book-appointment") ||
-      path.startsWith("/client/intake-form") ||
-      path.startsWith("/client/check-in") ||
-      path.startsWith("/check-in") ||
-      path === "/change-password";
-    if (!alwaysAllowed && path !== gateTarget) {
-      return <Navigate to={gateTarget} replace />;
-    }
+  if (redirectTarget) {
+    return <Navigate to={redirectTarget} replace />;
   }
 
   return <>{children}</>;
