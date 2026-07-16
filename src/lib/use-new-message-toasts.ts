@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUnreadMessages } from "@/lib/use-unread-messages";
 import { playSoftChime } from "@/lib/use-message-chime";
 
+// Variable global para evitar que se muestren múltiples toasts para el mismo hilo en un corto período de tiempo
+const globalSeenCounts = new Map<string, number>();
 
 /**
  * MSG-D-1 in-app toast notifications.
@@ -19,21 +21,17 @@ import { playSoftChime } from "@/lib/use-message-chime";
  */
 export function useNewMessageToasts(role: "advocate" | "client") {
   const { byThread } = useUnreadMessages();
-  const prevRef = useRef<Map<string, number> | null>(null);
   const navigate = useNavigate();
   const nameCacheRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
-    const prev = prevRef.current;
-    // First tick — establish baseline silently so we don't toast on page load.
-    if (prev === null) {
-      prevRef.current = new Map(byThread);
-      return;
-    }
-
     const newlyGrown: Array<{ threadId: string; delta: number }> = [];
+    
     byThread.forEach((count, threadId) => {
-      const before = prev.get(threadId) ?? 0;
+      // Si el hilo no existe en la memoria, asume el conteo actual como "ya visto" (baseline silencioso).
+      // Esto evita que lance notificaciones la primera vez que carga la página.
+      const before = globalSeenCounts.get(threadId) ?? count;
+
       if (count > before) {
         // Skip if user is already viewing this exact thread.
         const path = window.location.pathname;
@@ -44,20 +42,17 @@ export function useNewMessageToasts(role: "advocate" | "client") {
           newlyGrown.push({ threadId, delta: count - before });
         }
       }
+      // Actualizamos la memoria global para la próxima validación
+      globalSeenCounts.set(threadId, count);
     });
-
-    prevRef.current = new Map(byThread);
 
     if (newlyGrown.length === 0) return;
 
     // One soft chime per tick, regardless of how many toasts fire.
-    // Suppressed when there are no surviving toasts (e.g. user is on-thread).
     playSoftChime();
 
 
     (async () => {
-      // Resolve sender names: for client there's only one thread (advocate);
-      // for advocate, look up the client profile for each newly-grown thread.
       for (const { threadId, delta } of newlyGrown) {
         let name = nameCacheRef.current.get(threadId);
         if (!name) {
@@ -77,8 +72,7 @@ export function useNewMessageToasts(role: "advocate" | "client") {
                 .select("full_name, email")
                 .eq("id", t.client_id)
                 .maybeSingle();
-              name =
-                (p?.full_name?.trim() || p?.email || "a client") as string;
+              name = (p?.full_name?.trim() || p?.email || "a client") as string;
             } else {
               name = "a client";
             }

@@ -70,18 +70,21 @@ function formatInboxRelative(iso: string | null) {
 // Thread view (shared by client + advocate)
 // ============================================================
 function ThreadView({
-  threadId,
+  threadId: initialThreadId,
+  clientId,
   currentUserId,
   viewerRole,
   otherParty,
   headerBack,
 }: {
-  threadId: string;
+  threadId: string | null; // Puede ser null si es un nuevo hilo
+  clientId: string | null; // ID del cliente asociado al hilo
   currentUserId: string;
   viewerRole: "advocate" | "client";
   otherParty: { name: string; colourKey?: ClientColourKey } | null;
   headerBack?: { to: string; label: string };
 }) {
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(initialThreadId);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
@@ -95,10 +98,15 @@ function ThreadView({
     useMessageAttachments(messageIds);
 
   const fetchMessages = useCallback(async () => {
+    if (!activeThreadId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from("messages")
       .select("*")
-      .eq("thread_id", threadId)
+      .eq("thread_id", activeThreadId)
       .order("created_at", { ascending: true });
     if (error) {
       console.error("messages fetch", error);
@@ -111,16 +119,42 @@ function ThreadView({
       (m) => !m.read_at && m.sender_id !== currentUserId
     );
     if (hasUnreadFromOther) {
-      markThreadRead(threadId).catch(() => {});
+      markThreadRead(activeThreadId).catch(() => {});
     }
-  }, [threadId, currentUserId]);
+  }, [activeThreadId, currentUserId]);
 
-  // initial load + polling
+  // web sokada
   useEffect(() => {
+    // Hacemos la carga inicial de los mensajes
     fetchMessages();
-    const t = setInterval(fetchMessages, POLL_MS);
-    return () => clearInterval(t);
-  }, [fetchMessages]);
+
+    // Si no hay un hilo activo (por ejemplo, si es un cliente nuevo sin mensajes), no nos suscribimos a nada aún
+    if (!activeThreadId) return;
+
+    // 2. Creamos un canal único para este hilo específico
+    const channel = supabase
+      .channel(`realtime-thread-${activeThreadId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', // Escuchamos INSERTS, UPDATES o DELETES
+          schema: 'public', 
+          table: 'messages',
+          filter: `thread_id=eq.${activeThreadId}` // ¡CRÍTICO! Solo escuchamos cambios de ESTE chat
+        },
+        () => {
+          // Cuando PostgreSQL avise que alguien escribió un mensaje (o lo borró/editó),
+          // volvemos a ejecutar la función que trae los mensajes y actualiza el estado.
+          fetchMessages();
+        }
+      )
+      .subscribe();
+
+    // 3. Limpiamos el WebSocket cuando el usuario cierra el chat o cambia de hilo
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchMessages, activeThreadId]);
 
   // auto-scroll to bottom on new messages
   useEffect(() => {
@@ -136,16 +170,14 @@ function ThreadView({
     const body = draft.trim();
     if ((!body && pendingFiles.length === 0) || sending) return;
     setSending(true);
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({
-        thread_id: threadId,
-        sender_id: currentUserId,
-        sender_role: viewerRole, // trigger will overwrite anyway
-        body: body || "Attachment",
-      })
-      .select("*")
-      .single();
+    // Llama a tu RPC que crea el hilo si thread_id es nulo (ajusta el nombre del RPC)
+    const { data, error } = await supabase.rpc("send_message", {
+      p_thread_id: activeThreadId,
+      p_sender_id: currentUserId,
+      p_sender_role: viewerRole,
+      p_client_id: clientId, // Importante para saber a quién asignarle el nuevo hilo
+      p_body: body || "Attachment",
+    }).single();
     if (error || !data) {
       setSending(false);
       toast({
@@ -157,12 +189,16 @@ function ThreadView({
     }
     const newMsg = data as Message;
 
+    if (!activeThreadId && newMsg.thread_id) {
+      setActiveThreadId(newMsg.thread_id);
+    }
+
     // Upload attachments (if any) tied to the new message
     if (pendingFiles.length > 0) {
       const failures: string[] = [];
       for (const file of pendingFiles) {
         const res = await uploadAttachment({
-          threadId,
+          threadId: activeThreadId,
           messageId: newMsg.id,
           uploaderId: currentUserId,
           file,
@@ -617,75 +653,76 @@ function ClientMessagesPage() {
 // Advocate inbox
 // ============================================================
 type InboxRow = {
-  thread: Thread;
-  client: ClientLite | null;
+  thread: Thread | null;
+  client: ClientLite;
   preview: string | null;
   preview_at: string | null;
 };
 
-function AdvocateInbox({ onOpen }: { onOpen: (threadId: string) => void }) {
+function AdvocateInbox({ onOpen, advocateId }: { onOpen: (threadId: string) => void; advocateId: string }) {
   const [rows, setRows] = useState<InboxRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { byThread: unreadByThread } = useUnreadMessages();
 
+  // 1. La carga ahora es una sola petición ultra-ligera
   const load = useCallback(async () => {
-    const { data: threads, error } = await supabase
-      .from("message_threads")
-      .select("*")
-      .order("last_message_at", { ascending: false, nullsFirst: false });
+    const { data, error } = await supabase.rpc("get_advocate_inbox", {
+      p_advocate_id: advocateId,
+    });
+
     if (error) {
-      console.error(error);
+      console.error("Error cargando inbox:", error);
       setLoading(false);
       return;
     }
-    const tList = (threads ?? []) as Thread[];
-    const clientIds = tList.map((t) => t.client_id);
 
-    const [{ data: profiles }, { data: latest }] = await Promise.all([
-      clientIds.length
-        ? supabase
-            .from("profiles")
-            .select("id, full_name, email, client_colour")
-            .in("id", clientIds)
-        : Promise.resolve({ data: [] as any[] }),
-      tList.length
-        ? supabase
-            .from("messages")
-            .select("thread_id, body, created_at")
-            .in("thread_id", tList.map((t) => t.id))
-            .order("created_at", { ascending: false })
-        : Promise.resolve({ data: [] as any[] }),
-    ]);
+    // Mapeamos el resultado plano del SQL a tu estructura InboxRow
+    const formattedRows: InboxRow[] = (data || []).map((row: any) => ({
+      thread: row.thread_id
+        ? {
+            id: row.thread_id,
+            client_id: row.client_id,
+            advocate_id: advocateId,
+            last_message_at: row.last_message_at,
+            created_at: row.preview_created_at || row.last_message_at, // Fallback
+          }
+        : null,
+      client: {
+        id: row.client_id,
+        full_name: row.full_name,
+        email: row.email,
+        client_colour: row.client_colour,
+      },
+      preview: row.preview_body,
+      preview_at: row.preview_created_at || row.last_message_at,
+    }));
 
-    const byClient = new Map<string, ClientLite>();
-    (profiles ?? []).forEach((p: any) => byClient.set(p.id, p as ClientLite));
-
-    const previewByThread = new Map<string, { body: string; created_at: string }>();
-    (latest ?? []).forEach((m: any) => {
-      if (!previewByThread.has(m.thread_id)) {
-        previewByThread.set(m.thread_id, { body: m.body, created_at: m.created_at });
-      }
-    });
-
-    setRows(
-      tList.map((t) => {
-        const p = previewByThread.get(t.id);
-        return {
-          thread: t,
-          client: byClient.get(t.client_id) ?? null,
-          preview: p?.body ?? null,
-          preview_at: p?.created_at ?? t.last_message_at,
-        };
-      })
-    );
+    setRows(formattedRows);
     setLoading(false);
-  }, []);
+  }, [advocateId]);
 
   useEffect(() => {
-    load();
-    const t = setInterval(load, POLL_MS);
-    return () => clearInterval(t);
+    load(); // Carga inicial
+
+    // Nos suscribimos a cualquier INSERT o UPDATE en la tabla messages
+    const channel = supabase
+      .channel('inbox-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        (payload) => {
+          // Cuando la base de datos avisa de un cambio, recargamos la bandeja.
+          // Al ser una RPC optimizada, esta recarga es instantánea y no pesa nada.
+          load();
+        }
+      )
+      .subscribe();
+
+    // Limpiamos el WebSocket cuando el componente se desmonta (muy importante)
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [load]);
 
   if (loading) {
@@ -693,9 +730,13 @@ function AdvocateInbox({ onOpen }: { onOpen: (threadId: string) => void }) {
   }
 
   const visibleRows = unreadOnly
-    ? rows.filter((r) => (unreadByThread.get(r.thread.id) ?? 0) > 0)
+    ? rows.filter((r) => r.thread && (unreadByThread.get(r.thread.id) ?? 0) > 0)
     : rows;
-  const totalUnread = rows.reduce((n, r) => n + ((unreadByThread.get(r.thread.id) ?? 0) > 0 ? 1 : 0), 0);
+  const totalUnread = rows.reduce((n, r) => {
+    // Solo buscamos en el mapa si el hilo realmente existe
+    const unreadCount = r.thread ? (unreadByThread.get(r.thread.id) ?? 0) : 0;
+    return n + (unreadCount > 0 ? 1 : 0);
+  }, 0);
 
   const filterBar = (
     <div className="flex items-center gap-2 mb-3">
@@ -743,19 +784,22 @@ function AdvocateInbox({ onOpen }: { onOpen: (threadId: string) => void }) {
         <div className="space-y-2">
           {visibleRows.map((row) => {
             const name = row.client?.full_name || row.client?.email || "Client";
-            const unread = unreadByThread.get(row.thread.id) ?? 0;
+            const threadId = row.thread?.id;
+            const unread = threadId ? (unreadByThread.get(threadId) ?? 0) : 0;
             const hasUnread = unread > 0;
+
             const preview = row.preview
               ? row.preview.length > 80
                 ? row.preview.slice(0, 80) + "…"
                 : row.preview
               : "No messages yet — say hello.";
+
             return (
               <button
-                key={row.thread.id}
-                onClick={() => onOpen(row.thread.id)}
-                className={cn(
-                  "w-full text-left glass-card p-4 flex items-center gap-3 hover:shadow-soft hover:-translate-y-0.5 transition-calm",
+                key={row.client.id} // Cambiado a client.id porque thread puede ser nulo
+                // Si hay hilo, abrimos el hilo. Si no, abrimos la ruta "new" con el clientId
+                onClick={() => threadId ? onOpen(threadId) : onOpen(`new?clientId=${row.client.id}`)}
+                className={cn("w-full text-left glass-card p-4 flex items-center gap-3 hover:shadow-soft hover:-translate-y-0.5 transition-calm",
                   hasUnread && "ring-1 ring-success/40 bg-success/5"
                 )}
               >
@@ -805,6 +849,7 @@ function AdvocateInbox({ onOpen }: { onOpen: (threadId: string) => void }) {
 function AdvocateMessagesPage() {
   const { id: threadIdParam } = useParams();
   const [searchParams] = useSearchParams();
+  const clientIdParam = searchParams.get("clientId");
   const enquiryParam = searchParams.get("enquiry");
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
@@ -829,27 +874,36 @@ function AdvocateMessagesPage() {
     }
     setThreadLoading(true);
     (async () => {
-      const { data: t } = await supabase
-        .from("message_threads")
-        .select("client_id")
-        .eq("id", threadIdParam)
-        .maybeSingle();
-      if (t?.client_id) {
+
+      const targetClientId = threadIdParam === "new" ? clientIdParam : null;
+      let clientIdToFetch = targetClientId;
+
+      // Si es un hilo existente, buscamos el client_id
+      if (threadIdParam !== "new") {
+        const { data: t } = await supabase
+          .from("message_threads")
+          .select("client_id")
+          .eq("id", threadIdParam)
+          .maybeSingle();
+        clientIdToFetch = t?.client_id;
+      }
+
+      if (clientIdToFetch) {
         const { data: p } = await supabase
           .from("profiles")
           .select("full_name, email, client_colour")
-          .eq("id", t.client_id)
+          .eq("id", clientIdToFetch)
           .maybeSingle();
         if (p) {
-          setOtherParty({
-            name: (p.full_name as string) || (p.email as string) || "Client",
-            colourKey: p.client_colour as ClientColourKey,
-          });
-        }
+            setOtherParty({
+              name: (p.full_name as string) || (p.email as string) || "Client",
+              colourKey: p.client_colour as ClientColourKey,
+            });
+          }
       }
       setThreadLoading(false);
     })();
-  }, [threadIdParam]);
+  }, [threadIdParam, clientIdParam]);
 
   if (threadIdParam) {
     return (
@@ -858,7 +912,8 @@ function AdvocateMessagesPage() {
           <div className="glass-card p-10 text-center text-muted-foreground">Loading…</div>
         ) : (
           <ThreadView
-            threadId={threadIdParam}
+            threadId={threadIdParam === "new" ? null : threadIdParam} // Pasamos null si es nuevo
+            clientId={clientIdParam} // Nueva propiedad necesaria para ThreadView
             currentUserId={userId}
             viewerRole="advocate"
             otherParty={otherParty}
@@ -875,7 +930,17 @@ function AdvocateMessagesPage() {
         <h2 id="conversations-heading" className="font-display text-2xl text-primary-deep mb-3">
           Client conversations
         </h2>
-        <AdvocateInbox onOpen={(id) => navigate(`/advocate/messages/${id}`)} />
+        {/* Solo renderizamos la bandeja si ya tenemos el userId */}
+        {userId ? (
+          <AdvocateInbox 
+            onOpen={(id) => navigate(`/advocate/messages/${id}`)} 
+            advocateId={userId} 
+          />
+        ) : (
+          <div className="glass-card p-10 text-center text-muted-foreground">
+            Loading conversations...
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="inbox-heading" ref={inboxRef}>

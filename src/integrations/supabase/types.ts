@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -741,31 +746,55 @@ export type Database = {
       }
       client_fee_arrangements: {
         Row: {
+          agreements_completed_method: string | null
+          agreements_completed_notes: string | null
           client_id: string
           created_at: string
           external_payment_link_url: string | null
+          gating_override_at: string | null
+          gating_override_reason: string | null
           model: Database["public"]["Enums"]["fee_model"]
           notes: string
+          payment_arrangement: string | null
+          payment_request_issued_at: string | null
+          service_selected_at: string | null
+          service_tier_id: string | null
           total_amount: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          agreements_completed_method?: string | null
+          agreements_completed_notes?: string | null
           client_id: string
           created_at?: string
           external_payment_link_url?: string | null
+          gating_override_at?: string | null
+          gating_override_reason?: string | null
           model?: Database["public"]["Enums"]["fee_model"]
           notes?: string
+          payment_arrangement?: string | null
+          payment_request_issued_at?: string | null
+          service_selected_at?: string | null
+          service_tier_id?: string | null
           total_amount?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          agreements_completed_method?: string | null
+          agreements_completed_notes?: string | null
           client_id?: string
           created_at?: string
           external_payment_link_url?: string | null
+          gating_override_at?: string | null
+          gating_override_reason?: string | null
           model?: Database["public"]["Enums"]["fee_model"]
           notes?: string
+          payment_arrangement?: string | null
+          payment_request_issued_at?: string | null
+          service_selected_at?: string | null
+          service_tier_id?: string | null
           total_amount?: number
           updated_at?: string
           updated_by?: string | null
@@ -1413,6 +1442,7 @@ export type Database = {
       }
       inbound_messages: {
         Row: {
+          additional_notes: string | null
           archived_at: string | null
           assigned_advocate: string | null
           converted_at: string | null
@@ -1428,10 +1458,13 @@ export type Database = {
           internal_notes: string | null
           ip_address: string | null
           last_contacted_at: string | null
+          main_concern: string | null
           message: string
           name: string
           phone: string | null
           preferred_contact: string | null
+          preferred_language: string | null
+          preferred_time: string | null
           read_at: string | null
           service_interest: string | null
           source: string | null
@@ -1441,6 +1474,7 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          additional_notes?: string | null
           archived_at?: string | null
           assigned_advocate?: string | null
           converted_at?: string | null
@@ -1456,10 +1490,13 @@ export type Database = {
           internal_notes?: string | null
           ip_address?: string | null
           last_contacted_at?: string | null
+          main_concern?: string | null
           message: string
           name: string
           phone?: string | null
           preferred_contact?: string | null
+          preferred_language?: string | null
+          preferred_time?: string | null
           read_at?: string | null
           service_interest?: string | null
           source?: string | null
@@ -1469,6 +1506,7 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          additional_notes?: string | null
           archived_at?: string | null
           assigned_advocate?: string | null
           converted_at?: string | null
@@ -1484,10 +1522,13 @@ export type Database = {
           internal_notes?: string | null
           ip_address?: string | null
           last_contacted_at?: string | null
+          main_concern?: string | null
           message?: string
           name?: string
           phone?: string | null
           preferred_contact?: string | null
+          preferred_language?: string | null
+          preferred_time?: string | null
           read_at?: string | null
           service_interest?: string | null
           source?: string | null
@@ -1505,6 +1546,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      incoming_call_request: {
+        Row: {
+          additional_notes: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          ip_address: string | null
+          main_concern: string | null
+          modify_status_at: string | null
+          phone: string | null
+          preferred_language: string | null
+          preferred_time: string | null
+          source: string | null
+          status:
+            | Database["public"]["Enums"]["incoming_call_request_status"]
+            | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          ip_address?: string | null
+          main_concern?: string | null
+          modify_status_at?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          preferred_time?: string | null
+          source?: string | null
+          status?:
+            | Database["public"]["Enums"]["incoming_call_request_status"]
+            | null
+        }
+        Update: {
+          additional_notes?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          ip_address?: string | null
+          main_concern?: string | null
+          modify_status_at?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          preferred_time?: string | null
+          source?: string | null
+          status?:
+            | Database["public"]["Enums"]["incoming_call_request_status"]
+            | null
+        }
+        Relationships: []
       }
       message_attachments: {
         Row: {
@@ -2250,6 +2345,7 @@ export type Database = {
           status: Database["public"]["Enums"]["task_status"]
           time_block_end: string | null
           title: string
+          visible_to_client: boolean
         }
         Insert: {
           auto_dedup_key?: string | null
@@ -2267,6 +2363,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           time_block_end?: string | null
           title: string
+          visible_to_client?: boolean
         }
         Update: {
           auto_dedup_key?: string | null
@@ -2284,6 +2381,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           time_block_end?: string | null
           title?: string
+          visible_to_client?: boolean
         }
         Relationships: [
           {
@@ -2330,21 +2428,18 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -2370,6 +2465,7 @@ export type Database = {
           signals: Json
         }[]
       }
+      can_begin_client_work: { Args: { p_client_id: string }; Returns: boolean }
       client_has_all_required_agreements: {
         Args: { _client_id: string }
         Returns: boolean
@@ -2398,7 +2494,29 @@ export type Database = {
         }[]
       }
       get_advocate_dashboard_counts: { Args: never; Returns: Json }
+      get_advocate_inbox: {
+        Args: { p_advocate_id: string }
+        Returns: {
+          client_colour: string
+          client_id: string
+          email: string
+          full_name: string
+          last_message_at: string
+          preview_body: string
+          preview_created_at: string
+          thread_id: string
+        }[]
+      }
       get_advocate_notes: { Args: { _request_id: string }; Returns: string }
+      get_all_clients: {
+        Args: never
+        Returns: {
+          client_colour: string
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_appointment_private_notes_map: {
         Args: never
         Returns: {
@@ -2423,6 +2541,10 @@ export type Database = {
           id: string
         }[]
       }
+      get_my_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_recent_low_mood_rows: {
         Args: { _days?: number }
         Returns: {
@@ -2431,9 +2553,12 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_my_role: {
-        Args: Record<PropertyKey, never>
-        Returns: Database["public"]["Enums"]["app_role"]
+      get_unread_message_counts: {
+        Args: never
+        Returns: {
+          thread_id: string
+          unread_count: number
+        }[]
       }
       has_role: {
         Args: {
@@ -2446,9 +2571,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
-      is_advocate: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
+      is_advocate: { Args: never; Returns: boolean }
+      issue_payment_request: {
+        Args: { _client_id: string }
+        Returns: undefined
       }
       list_my_trusted_devices: {
         Args: never
@@ -2460,6 +2586,10 @@ export type Database = {
           last_used_at: string
         }[]
       }
+      mark_agreements_completed_externally: {
+        Args: { _client_id: string; _notes: string }
+        Returns: undefined
+      }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_client_invited: { Args: { _client_id: string }; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
@@ -2467,8 +2597,8 @@ export type Database = {
         Args: {
           _amount?: number
           _client_id: string
-          _method: string
-          _notes: string
+          _method?: string
+          _notes?: string
         }
         Returns: undefined
       }
@@ -2493,6 +2623,10 @@ export type Database = {
         }[]
       }
       recalculate_all_active_client_urgency: { Args: never; Returns: number }
+      recompute_client_payment_state: {
+        Args: { p_client_id: string }
+        Returns: undefined
+      }
       recompute_client_progress: {
         Args: { _client_id: string }
         Returns: number
@@ -2515,8 +2649,47 @@ export type Database = {
         Returns: undefined
       }
       scan_stage_timeouts: { Args: never; Returns: undefined }
+      select_client_service: {
+        Args: {
+          _arrangement: string
+          _client_id: string
+          _notes: string
+          _tier_id: string
+          _tier_slug: string
+          _total: number
+        }
+        Returns: undefined
+      }
       send_back_report: {
         Args: { _note: string; _report_id: string }
+        Returns: undefined
+      }
+      send_message: {
+        Args: {
+          p_body: string
+          p_client_id: string
+          p_sender_id: string
+          p_sender_role: string
+          p_thread_id: string
+        }
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_role: string
+          thread_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_gating_override: {
+        Args: { _client_id: string; _enabled: boolean; _reason: string }
         Returns: undefined
       }
       set_report_stage_visibility: {
@@ -2571,6 +2744,7 @@ export type Database = {
       document_visibility: "shared" | "advocate_private"
       fee_model: "tier_50_50" | "custom"
       inbound_message_status: "new" | "read" | "archived"
+      incoming_call_request_status: "no_done" | "done"
       payment_kind: "deposit" | "final" | "custom"
       report_review_status: "draft" | "shared_for_review" | "agreed"
       report_stage: "draft" | "v1" | "v2" | "v3" | "finalised" | "updated"
@@ -2743,6 +2917,7 @@ export const Constants = {
       document_visibility: ["shared", "advocate_private"],
       fee_model: ["tier_50_50", "custom"],
       inbound_message_status: ["new", "read", "archived"],
+      incoming_call_request_status: ["no_done", "done"],
       payment_kind: ["deposit", "final", "custom"],
       report_review_status: ["draft", "shared_for_review", "agreed"],
       report_stage: ["draft", "v1", "v2", "v3", "finalised", "updated"],
@@ -2752,4 +2927,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -46,6 +46,8 @@ import { RequireAdvocate, RequireClient } from "./components/RequireAdvocate";
 import AccountPending from "./pages/AccountPending";
 import { isInviteAuthCallback } from "./lib/invite-routing";
 
+import { UnreadMessagesProvider } from "@/lib/use-unread-messages";
+
 const queryClient = new QueryClient();
 
 const A = ({ children }: { children: React.ReactNode }) => (
@@ -69,65 +71,67 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<RootRoute />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/set-password" element={<Welcome />} />
-            <Route path="/accept-invite" element={<Welcome />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/intake" element={<Intake />} />
-            <Route path="/check-in" element={<CheckIn />} />
-            <Route path="/change-password" element={<ChangePassword />} />
-            <Route path="/account-pending" element={<AccountPending />} />
+          <UnreadMessagesProvider>
+            <Routes>
+              <Route path="/" element={<RootRoute />} />
+              <Route path="/welcome" element={<Welcome />} />
+              <Route path="/set-password" element={<Welcome />} />
+              <Route path="/accept-invite" element={<Welcome />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/intake" element={<Intake />} />
+              <Route path="/check-in" element={<CheckIn />} />
+              <Route path="/change-password" element={<ChangePassword />} />
+              <Route path="/account-pending" element={<AccountPending />} />
 
-            <Route path="/advocate" element={<A><AdvocateDashboard /></A>} />
-            <Route path="/advocate/dashboard" element={<A><AdvocateDashboard /></A>} />
-            <Route path="/advocate/clients" element={<A><AdvocateClients /></A>} />
-            <Route path="/advocate/client/:id" element={<A><AdvocateClientDetail /></A>} />
-            <Route path="/advocate/task/:id" element={<A><TaskDetail /></A>} />
-            <Route path="/advocate/calendar" element={<A><CalendarPage /></A>} />
-            <Route path="/advocate/documents" element={<A><DocumentsPage /></A>} />
-            <Route path="/advocate/messages" element={<A><Messages role="advocate" /></A>} />
-            <Route path="/advocate/messages/:id" element={<A><Messages role="advocate" /></A>} />
-            <Route path="/advocate/payments" element={<A><Payments /></A>} />
-            <Route path="/advocate/brain-dump" element={<A><BrainDump role="advocate" /></A>} />
-            <Route path="/advocate/todo" element={<A><TodoList role="advocate" /></A>} />
-            <Route path="/advocate/templates" element={<A><Templates /></A>} />
-            <Route path="/advocate/settings/automations" element={<A><SettingsAutomations /></A>} />
-            <Route path="/advocate/availability" element={<A><AvailabilityRequestsList /></A>} />
-            <Route path="/advocate/availability/new" element={<A><AvailabilityRequestForm /></A>} />
-            <Route path="/advocate/availability/:id/edit" element={<A><AvailabilityRequestForm /></A>} />
-            <Route path="/advocate/availability/:id/review" element={<A><AvailabilityReceived /></A>} />
-            <Route path="/advocate/availability/:id/confirm" element={<A><AvailabilityConfirm /></A>} />
-            <Route path="/advocate/settings" element={<A><Settings /></A>} />
+              <Route path="/advocate" element={<A><AdvocateDashboard /></A>} />
+              <Route path="/advocate/dashboard" element={<A><AdvocateDashboard /></A>} />
+              <Route path="/advocate/clients" element={<A><AdvocateClients /></A>} />
+              <Route path="/advocate/client/:id" element={<A><AdvocateClientDetail /></A>} />
+              <Route path="/advocate/task/:id" element={<A><TaskDetail /></A>} />
+              <Route path="/advocate/calendar" element={<A><CalendarPage /></A>} />
+              <Route path="/advocate/documents" element={<A><DocumentsPage /></A>} />
+              <Route path="/advocate/messages" element={<A><Messages role="advocate" /></A>} />
+              <Route path="/advocate/messages/:id" element={<A><Messages role="advocate" /></A>} />
+              <Route path="/advocate/payments" element={<A><Payments /></A>} />
+              <Route path="/advocate/brain-dump" element={<A><BrainDump role="advocate" /></A>} />
+              <Route path="/advocate/todo" element={<A><TodoList role="advocate" /></A>} />
+              <Route path="/advocate/templates" element={<A><Templates /></A>} />
+              <Route path="/advocate/settings/automations" element={<A><SettingsAutomations /></A>} />
+              <Route path="/advocate/availability" element={<A><AvailabilityRequestsList /></A>} />
+              <Route path="/advocate/availability/new" element={<A><AvailabilityRequestForm /></A>} />
+              <Route path="/advocate/availability/:id/edit" element={<A><AvailabilityRequestForm /></A>} />
+              <Route path="/advocate/availability/:id/review" element={<A><AvailabilityReceived /></A>} />
+              <Route path="/advocate/availability/:id/confirm" element={<A><AvailabilityConfirm /></A>} />
+              <Route path="/advocate/settings" element={<A><Settings /></A>} />
 
-            <Route path="/client" element={<C><ClientDashboard /></C>} />
-            <Route path="/client/dashboard" element={<C><ClientDashboard /></C>} />
-            <Route path="/client/check-in" element={<C><CheckIn /></C>} />
-            <Route path="/client/task/:id" element={<C><TaskDetail /></C>} />
-            <Route path="/client/calendar" element={<C><CalendarPage /></C>} />
-            <Route path="/client/documents" element={<C><DocumentsPage /></C>} />
-            <Route path="/client/messages" element={<C><Messages role="client" /></C>} />
-            <Route path="/client/availability" element={<C><ClientAvailabilityList /></C>} />
-            <Route path="/client/availability/:id" element={<C><ClientAvailabilityRespond /></C>} />
-            <Route path="/client/brain-dump" element={<C><BrainDump role="client" /></C>} />
-            <Route path="/client/todo" element={<C><TodoList role="client" /></C>} />
-            <Route path="/client/settings" element={<C><Settings /></C>} />
-            <Route path="/client/code-of-conduct" element={<C><CodeOfConduct /></C>} />
-            <Route path="/client/onboarding" element={<C><ClientOnboarding /></C>} />
-            <Route path="/client/agreements" element={<C><ClientAgreements /></C>} />
-            <Route path="/client/navigation-intake" element={<C><ClientNavigationIntake /></C>} />
-            <Route path="/client/intake-form" element={<C><ClientIntakeForm /></C>} />
-            <Route path="/book-appointment" element={<C><BookAppointment mode="consultation" /></C>} />
-            <Route path="/client/book-followup" element={<C><BookAppointment mode="followup" /></C>} />
-            <Route path="/client/payment" element={<C><ClientPayment /></C>} />
-            <Route path="/client/support" element={<C><ClientSupport /></C>} />
+              <Route path="/client" element={<C><ClientDashboard /></C>} />
+              <Route path="/client/dashboard" element={<C><ClientDashboard /></C>} />
+              <Route path="/client/check-in" element={<C><CheckIn /></C>} />
+              <Route path="/client/task/:id" element={<C><TaskDetail /></C>} />
+              <Route path="/client/calendar" element={<C><CalendarPage /></C>} />
+              <Route path="/client/documents" element={<C><DocumentsPage /></C>} />
+              <Route path="/client/messages" element={<C><Messages role="client" /></C>} />
+              <Route path="/client/availability" element={<C><ClientAvailabilityList /></C>} />
+              <Route path="/client/availability/:id" element={<C><ClientAvailabilityRespond /></C>} />
+              <Route path="/client/brain-dump" element={<C><BrainDump role="client" /></C>} />
+              <Route path="/client/todo" element={<C><TodoList role="client" /></C>} />
+              <Route path="/client/settings" element={<C><Settings /></C>} />
+              <Route path="/client/code-of-conduct" element={<C><CodeOfConduct /></C>} />
+              <Route path="/client/onboarding" element={<C><ClientOnboarding /></C>} />
+              <Route path="/client/agreements" element={<C><ClientAgreements /></C>} />
+              <Route path="/client/navigation-intake" element={<C><ClientNavigationIntake /></C>} />
+              <Route path="/client/intake-form" element={<C><ClientIntakeForm /></C>} />
+              <Route path="/book-appointment" element={<C><BookAppointment mode="consultation" /></C>} />
+              <Route path="/client/book-followup" element={<C><BookAppointment mode="followup" /></C>} />
+              <Route path="/client/payment" element={<C><ClientPayment /></C>} />
+              <Route path="/client/support" element={<C><ClientSupport /></C>} />
 
-            <Route path="/unsubscribe" element={<Unsubscribe />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email-change" element={<VerifyEmailChange />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email-change" element={<VerifyEmailChange />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UnreadMessagesProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
