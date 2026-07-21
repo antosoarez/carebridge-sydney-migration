@@ -104,16 +104,16 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   }
 
   // Solo navega si NO está ya en el home de su rol correspondiente
-  if (requireRole && role !== requireRole && location.pathname !== roleHomePath(role)) {
-    return <Navigate to={roleHomePath(role)} replace />;
-  }
+  //if (requireRole && role !== requireRole && location.pathname !== roleHomePath(role)) {
+  //  return <Navigate to={roleHomePath(role)} replace />;
+  //}
 
   const redirectTarget = getClientRouteRedirect({
-    requireRole,
-    onboardingCheck,
-    gateTarget,
-    pathname: location.pathname,
-    isInviteFlow,
+    requireRole, // Rol requerido (siempre requiere "client")
+    onboardingCheck, // Estado de finalización del onboarding
+    gateTarget,  // Primer paso no cumplido en la puerta de viaje (null = acceso completo)
+    pathname: location.pathname, // Ruta actual
+    isInviteFlow, // Indica si el usuario está en un flujo de invitación
   });
 
   if (redirectTarget) {

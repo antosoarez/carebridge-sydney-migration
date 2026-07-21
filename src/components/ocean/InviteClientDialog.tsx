@@ -30,7 +30,8 @@ export function InviteClientDialog({ trigger, onCreated }: { trigger?: React.Rea
           full_name: name.trim(),
           method,
           temp_password: method === "direct" ? tempPassword : undefined,
-          redirect_to: `${window.location.origin}/welcome`,
+          //redirect_to: `${window.location.origin}/welcome`,
+          redirect_to: "https://www.client.carebridgeperth.com/welcome",
         },
       });
       if (error) throw error;
