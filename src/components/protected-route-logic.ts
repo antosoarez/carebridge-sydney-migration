@@ -17,9 +17,12 @@ export function getClientRouteRedirect({
     return null;
   }
 
+  const isCurrentGateTarget = !!gateTarget && (pathname === gateTarget || pathname.startsWith(`${gateTarget}/`));
+
   if (
     onboardingCheck === "needs" &&
     !isInviteFlow &&
+    !isCurrentGateTarget &&
     !pathname.startsWith("/client/onboarding") &&
     !pathname.startsWith("/client/navigation-intake") &&
     !pathname.startsWith("/client/agreements")

@@ -37,4 +37,16 @@ describe("getClientRouteRedirect", () => {
       }),
     ).toBeNull();
   });
+
+  it("does not redirect back to onboarding when the user is already on the gate target", () => {
+    expect(
+      getClientRouteRedirect({
+        requireRole: "client",
+        onboardingCheck: "needs",
+        gateTarget: "/client/payment",
+        pathname: "/client/payment",
+        isInviteFlow: false,
+      }),
+    ).toBeNull();
+  });
 });
