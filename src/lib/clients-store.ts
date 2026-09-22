@@ -18,6 +18,7 @@ export function useClients(): { clients: ClientCase[]; loading: boolean; reload:
     let cancelled = false;
     (async () => {
       setLoading(true);
+      // Idea de optimización: Hacer una vista en supabase con esta informacion ya unida, para no tener que hacer múltiples queries y joins en el cliente.
       const { data: roles } = await supabase
         .from("user_roles")
         .select("user_id")

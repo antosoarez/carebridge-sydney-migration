@@ -125,11 +125,12 @@ function ThreadView({
 
   // web sokada
   useEffect(() => {
-    // Hacemos la carga inicial de los mensajes
-    fetchMessages();
-
-    // Si no hay un hilo activo (por ejemplo, si es un cliente nuevo sin mensajes), no nos suscribimos a nada aún
+   
+    // Si no hay un hilo creado previamente entonces no hay mensajes que recuperar ñeri
     if (!activeThreadId) return;
+
+     // Hacemos la carga inicial de los mensajes
+    fetchMessages();
 
     // 2. Creamos un canal único para este hilo específico
     const channel = supabase
@@ -140,21 +141,47 @@ function ThreadView({
           event: '*', // Escuchamos INSERTS, UPDATES o DELETES
           schema: 'public', 
           table: 'messages',
-          filter: `thread_id=eq.${activeThreadId}` // ¡CRÍTICO! Solo escuchamos cambios de ESTE chat
+          filter: `thread_id=eq.${activeThreadId}` // solo vigilamos el chat actual
         },
-        () => {
-          // Cuando PostgreSQL avise que alguien escribió un mensaje (o lo borró/editó),
-          // volvemos a ejecutar la función que trae los mensajes y actualiza el estado.
-          fetchMessages();
+        (payload) => {
+          // Se actualiza la lista de mensajes según el tipo de evento recibido
+          switch (payload.eventType) {
+            
+            case "INSERT": {
+              // nuevo mensaje
+              const newMessage = payload.new as Message;
+              if (newMessage.sender_id !== currentUserId) {
+                setMessages((prev) => [...prev, payload.new as Message]);
+              }
+              break;
+            }
+
+            case "DELETE": {
+              // LA validacion de la identidad es manejada por las politicas de supapija
+              // Si un usuario quiere borrar un mensaje en el que no es dueño sera rechazado y ese error es manejado en el handleDeleteMessage
+              setMessages((prev) => prev.filter(message => message.id !== payload.old.id));
+              break;
+            }
+
+            case "UPDATE": {
+              // actualizar mensaje previo
+              const updatedMessage = payload.new as Message;
+              if (updatedMessage.sender_id !== currentUserId) {
+                setMessages((prev) => 
+                  prev.map(message => message.id === payload.new.id ? (payload.new as Message) : message)
+                );
+              }
+              break;
+            }
+          }
         }
       )
-      .subscribe();
+      .subscribe()
 
-    // 3. Limpiamos el WebSocket cuando el usuario cierra el chat o cambia de hilo
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchMessages, activeThreadId]);
+  }, [fetchMessages, activeThreadId, currentUserId]);
 
   // auto-scroll to bottom on new messages
   useEffect(() => {
@@ -170,7 +197,6 @@ function ThreadView({
     const body = draft.trim();
     if ((!body && pendingFiles.length === 0) || sending) return;
     setSending(true);
-    // Llama a tu RPC que crea el hilo si thread_id es nulo (ajusta el nombre del RPC)
     const { data, error } = await supabase.rpc("send_message", {
       p_thread_id: activeThreadId,
       p_sender_id: currentUserId,
@@ -272,6 +298,54 @@ function ThreadView({
 
   const empty = !loading && messages.length === 0;
 
+  const dibujar_mensaje = (m: Message, showSeen: boolean) => {
+    const mine = m.sender_id === currentUserId;
+    return (
+      <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+        <div className={cn("max-w-[80%] flex flex-col gap-1.5", mine ? "items-end" : "items-start")}>
+          {m.body && m.body !== "Attachment" && (
+            <div
+              className={cn(
+                "rounded-2xl px-4 py-2.5 shadow-soft whitespace-pre-wrap break-words text-sm leading-relaxed",
+                mine
+                  ? "bg-primary text-primary-foreground rounded-br-md"
+                  : "bg-card text-foreground border border-border/40 rounded-bl-md"
+              )}
+            >
+              {m.body}
+            </div>
+          )}
+          <AttachmentList
+            attachments={attachmentsByMessage.get(m.id) ?? []}
+            mine={mine}
+          />
+          <span className="text-[10px] text-muted-foreground/80 mt-0.5 px-1 flex items-center gap-1">
+            {formatBubbleTime(m.created_at)}
+            {mine && (
+              showSeen ? (
+                <span className="text-success/80 inline-flex items-center gap-0.5" aria-label="Seen">
+                  <CheckCheck className="h-3 w-3" /> Seen
+                </span>
+              ) : mine ? (
+                <Check className="h-3 w-3 text-muted-foreground/60" aria-label="Sent" />
+              ) : null
+            )}
+            {mine && (
+              <button
+                type="button"
+                onClick={() => handleDeleteMessage(m.id)}
+                aria-label="Delete message"
+                className="ml-1 text-muted-foreground/50 hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card overflow-hidden flex flex-col h-[calc(100vh-13rem)] min-h-[480px] max-w-3xl mx-auto">
       {/* Header */}
@@ -339,48 +413,7 @@ function ThreadView({
             const mine = m.sender_id === currentUserId;
             const showSeen = mine && m.id === lastSeenMineId;
             return (
-              <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[80%] flex flex-col gap-1.5", mine ? "items-end" : "items-start")}>
-                  {m.body && m.body !== "📎 Attachment" && (
-                    <div
-                      className={cn(
-                        "rounded-2xl px-4 py-2.5 shadow-soft whitespace-pre-wrap break-words text-sm leading-relaxed",
-                        mine
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-card text-foreground border border-border/40 rounded-bl-md"
-                      )}
-                    >
-                      {m.body}
-                    </div>
-                  )}
-                  <AttachmentList
-                    attachments={attachmentsByMessage.get(m.id) ?? []}
-                    mine={mine}
-                  />
-                  <span className="text-[10px] text-muted-foreground/80 mt-0.5 px-1 flex items-center gap-1">
-                    {formatBubbleTime(m.created_at)}
-                    {mine && (
-                      showSeen ? (
-                        <span className="text-success/80 inline-flex items-center gap-0.5" aria-label="Seen">
-                          <CheckCheck className="h-3 w-3" /> Seen
-                        </span>
-                      ) : mine ? (
-                        <Check className="h-3 w-3 text-muted-foreground/60" aria-label="Sent" />
-                      ) : null
-                    )}
-                    {mine && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteMessage(m.id)}
-                        aria-label="Delete message"
-                        className="ml-1 text-muted-foreground/50 hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                </div>
-              </div>
+              dibujar_mensaje(m, showSeen)
             );
           });
         })()}
@@ -640,6 +673,7 @@ function ClientMessagesPage() {
       {!loading && thread && userId && (
         <ThreadView
           threadId={thread.id}
+          clientId={thread.advocate_id} // Si man, ya se que el nombre no corresponde
           currentUserId={userId}
           viewerRole="client"
           otherParty={advocate ? { name: advocate.name } : null}

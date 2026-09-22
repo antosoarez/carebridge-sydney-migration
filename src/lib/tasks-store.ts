@@ -52,8 +52,8 @@ export function useTasks(clientId?: string) {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      let q = supabase.from("tasks").select("*").order("created_at", { ascending: false });
-      if (clientId) q = q.eq("client_id", clientId);
+      const q = supabase.from("tasks").select("*").order("created_at", { ascending: false });
+      //if (clientId) q = q.eq("client_id", clientId);
       const { data, error } = await q;
       if (cancelled) return;
       if (error) {

@@ -41,12 +41,12 @@ export function ProtectedRoute({ children, requireRole }: Props) {
   }, [user]);
 
   // 1. Extraemos el ID como una variable primitiva (string o undefined) antes del efecto
-  const userId = user?.id;
+  //const userId = user?.id;
   const isInviteFlow = typeof window !== "undefined" && isInviteAuthCallback(new URL(window.location.href));
 
   useEffect(() => {
     // 2. Evaluamos usando userId en lugar del objeto user completo
-    if (!userId || isInviteFlow) { 
+    if (!user?.id || isInviteFlow) { 
       setPwdCheck("ok"); 
       setOnboardingCheck("ok"); 
       setGateChecked(true); 
@@ -58,7 +58,7 @@ export function ProtectedRoute({ children, requireRole }: Props) {
       const { data, error } = await (supabase
         .from("profiles") as any)
         .select("must_change_password, onboarding_completed_at, gating_override, agreements_completed_at, payment_completed_at, consultation_booked_at, intake_completed_at")
-        .eq("id", userId) // 3. Usamos la variable primitiva aquí
+        .eq("id", user?.id) // 3. Usamos la variable primitiva aquí
         .maybeSingle();
         
       if (cancelled) return;
@@ -80,7 +80,7 @@ export function ProtectedRoute({ children, requireRole }: Props) {
     })();
     
     return () => { cancelled = true; };
-  }, [userId, isInviteFlow]); // 4. El array ahora solo depende de nuestro string primitivo
+  }, [user, isInviteFlow]); // 4. El array ahora solo depende de nuestro string primitivo
 
   if (loading || mfaState === "checking" || pwdCheck === "checking" || onboardingCheck === "checking" || !gateChecked) {
     return (
