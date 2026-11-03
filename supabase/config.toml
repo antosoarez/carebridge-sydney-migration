@@ -45,3 +45,7 @@ project_id = "dkfjmtysfuqtdpaqpxsd"
     verify_jwt = false
   [functions.queue-message-notifications]
     verify_jwt = true
+  [functions.admin-create-client]
+    verify_jwt = false
+  [functions.admin-delete-client]
+    verify_jwt = true
