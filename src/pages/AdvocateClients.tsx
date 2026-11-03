@@ -202,19 +202,14 @@ export default function AdvocateClients() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      //const { data: { session } } = await supabase.auth.getSession();
-      // console.log("Sesión actual:", session);
-      //if (!session) {
-        //throw new Error("Sesión no válida o expirada. Por favor vuelve a iniciar sesión.");
-      //}
-
       const { data, error } = await supabase.functions.invoke("admin-delete-client", {
-        //headers: {
-        //Authorization: `Bearer ${session.access_token}`,
-        //},
         body: { user_id: pendingDelete.id },
       });
-      if (error) throw error;
+
+      if (error) {
+        const errJson = await (error as any)?.context?.json?.().catch(() => null);
+        throw new Error(errJson?.error || error.message);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       toast({ title: "Client removed", description: `${pendingDelete.name} and their records were removed.` });
       setPendingDelete(null);

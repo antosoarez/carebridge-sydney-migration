@@ -16,18 +16,17 @@ Deno.serve(async (req) => {
     const ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-    if (!authHeader) {
-      console.warn("Missing auth header, headers: ", Array.from(req.headers.keys()));
-      return json({ error: "Missing authorization", received_headers: Array.from(req.headers.keys()) }, 401);
+    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Validate the token directly using admin auth
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return json({ error: userErr?.message ?? "Unauthorized" }, 401);
     }
 
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
-
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const { data: roles } = await admin
       .from("user_roles").select("role").eq("user_id", userData.user.id);
     if (!roles?.some((r) => r.role === "advocate")) {
@@ -58,11 +57,15 @@ Deno.serve(async (req) => {
       }
     } catch { /* ignore storage cleanup errors */ }
 
-    // Cascade delete public rows via SECURITY DEFINER function
-    const { error: rpcErr } = await admin.rpc("admin_delete_client", { _user_id: userId });
+    // Cascade delete public rows via SECURITY DEFINER function.
+    // Must be called with the advocate's auth token because admin_delete_client checks public.has_role(auth.uid(), 'advocate').
+    const callerClient = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { error: rpcErr } = await callerClient.rpc("admin_delete_client", { _user_id: userId });
     if (rpcErr) return json({ error: rpcErr.message }, 400);
 
-    // Finally remove the auth user
+    // Finally remove the auth user using admin client
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);
     if (delErr) return json({ error: delErr.message }, 400);
 
