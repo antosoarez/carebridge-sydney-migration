@@ -15,8 +15,11 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+    const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+    if (!authHeader) {
+      console.warn("Missing auth header, headers: ", Array.from(req.headers.keys()));
+      return json({ error: "Missing authorization", received_headers: Array.from(req.headers.keys()) }, 401);
+    }
 
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },

@@ -48,4 +48,5 @@ project_id = "dkfjmtysfuqtdpaqpxsd"
   [functions.admin-create-client]
     verify_jwt = false
   [functions.admin-delete-client]
-    verify_jwt = true
+    verify_jwt = false
+
