@@ -26,7 +26,7 @@ import { CopyInviteLinkButton } from "@/components/ocean/CopyInviteLinkButton";
 import { EmailChangeSection, EmailChangeAuditLog } from "@/components/ocean/EmailChangeSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { ArrowLeft, CalendarRange, Lock, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarRange, Lock, Mail, RefreshCw, Sparkles } from "lucide-react";
 import { LifecycleStatusSelect } from "@/components/ocean/LifecycleStatusSelect";
 import { UrgencyBadge } from "@/components/ocean/UrgencyBadge";
 import { ClientCasesPanel } from "@/components/ocean/ClientCasesPanel";
@@ -328,6 +328,34 @@ export default function AdvocateClientDetail() {
   const client = clients.find((c) => c.id === id);
   const { value: liveProgress } = useOwnClientProgress(client?.id);
 
+  const [resending, setResending] = useState(false);
+
+  const resend = async (email: string) => {
+    const issued = (() => {
+      try { return !!localStorage.getItem(`invite-issued:${email.toLowerCase()}`); } catch { return false; }
+    })();
+    if (issued) {
+      const ok = window.confirm(
+        `You've already generated an invite link for ${email}. Sending a fresh email will deactivate any link you already shared (WhatsApp, SMS, copy-paste). Continue?`
+      );
+      if (!ok) return;
+    }
+    setResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-client-invite", {
+        body: { email, redirect_to: `${window.location.origin}/welcome` },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      try { localStorage.setItem(`invite-issued:${email.toLowerCase()}`, new Date().toISOString()); } catch { /* ignore */ }
+      toast({ title: "Invite re-sent 💌", description: `A fresh link is on its way to ${email}. Any previous link is now invalid.` });
+    } catch (err: any) {
+      toast({ title: "Couldn't resend", description: err.message, variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
+  };
+
 
   if (loading) {
     return <AppShell role="advocate"><div className="text-muted-foreground">Loading…</div></AppShell>;
@@ -383,14 +411,11 @@ export default function AdvocateClientDetail() {
               mode="advocate"
               onChanged={reload}
             />
-            {client.status === "invited" && (
               <div className="flex flex-wrap gap-2 pt-1">
-                <CopyInviteLinkButton email={client.email} variant="outline" />
-                <span className="text-xs text-muted-foreground self-center">
-                  Send by WhatsApp, SMS or your own email. Each link is unique to this client and one-time-use.
-                </span>
+                <Button size="sm" variant="ghost" className="gap-2" onClick={() => resend(client.email)} disabled={resending}>
+                  <Mail className="h-3.5 w-3.5" /> Resent email invitation nigga
+                </Button>
               </div>
-            )}
           </div>
         </div>
       </div>

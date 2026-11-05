@@ -666,7 +666,7 @@ function ClientMessagesPage() {
           </div>
           <p className="font-display text-lg text-primary-deep">Your conversation isn't ready yet</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Once your account is fully activated, your direct line to your advocate appears here.
+            Wait until your advocate starts a conversation with you. You'll see it here when they do.
           </p>
         </div>
       )}
