@@ -413,7 +413,7 @@ export default function AdvocateClientDetail() {
             />
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button size="sm" variant="ghost" className="gap-2" onClick={() => resend(client.email)} disabled={resending}>
-                  <Mail className="h-3.5 w-3.5" /> Resent email invitation nigga
+                  <Mail className="h-3.5 w-3.5" /> Resent email invitation
                 </Button>
               </div>
           </div>
